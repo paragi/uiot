@@ -83,7 +83,6 @@ class SpotPrice:
                 FROM "elspotprices"
                 WHERE "HourDK" >= NOW() 
                 ORDER BY DATE_TRUNC('hour', "HourDK")
-
                 '''
             result = get_energidataservice(query)
             #return [li["PriceArea"] for li in [*result["result"]["records"]]]
