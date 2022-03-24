@@ -62,7 +62,7 @@ class SpotPrice:
         return result_dict
 
     # Get list of Price Area names
-    def price_areas(self):
+    def areas(self):
         query = '''
             SELECT DISTINCT "PriceArea" 
             FROM "elspotprices"
@@ -98,5 +98,6 @@ class SpotPrice:
 
 
 spot_price = SpotPrice()
+print(spot_price.areas())
 pprint(spot_price.prices("DK2"))
 
