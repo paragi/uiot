@@ -1,8 +1,8 @@
 import json
 import urllib.request
-from typing import List, Any
 from pprint import pprint
 import requests
+from datetime import datetime
 
 def test1():
     # Constructing more specific searches seems to require authorisation
@@ -51,19 +51,16 @@ def charge_owners():
     result_dict = json.loads(fileobj.read())
     print(json.dumps(result_dict, indent=2))
 
-#class SpotPrice:
-#    __init(self, price_area):
-
-# Retrieve dataset from SQL query with energi data service
-# See https://www.energidataservice.dk for details
-def get_energidataservice(query: object) -> object:
-    uri = "https://api.energidataservice.dk/datastore_search_sql?sql="
-    fileobj = urllib.request.urlopen(uri + requests.utils.quote(query.strip()))
-    result_dict = json.loads(fileobj.read())
-    return result_dict
-
-
 class SpotPrice:
+    # Retrieve dataset from SQL query with energi data service
+    # See https://www.energidataservice.dk for details
+    def get_energidataservice(self, query: object) -> object:
+        uri = "https://api.energidataservice.dk/datastore_search_sql?sql="
+        #print("Get:", uri + query)
+        fileobj: object = urllib.request.urlopen(uri + requests.utils.quote(query.strip()))
+        result_dict = json.loads(fileobj.read())
+        return result_dict
+
     # Get list of Price Area names
     def price_areas(self):
         query = '''
@@ -71,27 +68,35 @@ class SpotPrice:
             FROM "elspotprices"
             ORDER BY "PriceArea"
             '''
-        result = get_energidataservice(query)
+        result = self.get_energidataservice(query)
         return [li["PriceArea"] for li in [*result["result"]["records"]]]
 
     # Get listy of current and future spot price
     def prices(self, price_area):
+        query = '''
+            SELECT "PriceArea", "HourDK", "SpotPriceDKK"
+            FROM "elspotprices"
+            WHERE "HourDK" >= NOW()
+            ORDER BY "PriceArea", DATE_TRUNC('hour', "HourDK")
+            '''
+        result = self.get_energidataservice(query)
+        # Format dictionary
+
+        price_list = {}
+        for entry in [*result["result"]["records"]]:
+            time = datetime.strptime(entry["HourDK"], '%Y-%m-%dT%H:%M:%S').hour
+            if entry["PriceArea"] not in price_list: price_list[entry["PriceArea"]] = {}
+            price_list[entry["PriceArea"]][datetime.strptime(entry["HourDK"], '%Y-%m-%dT%H:%M:%S').hour] = round(entry["SpotPriceDKK"]/1000,2)
+
         if price_area is not None:
-#  {"query":"query Dataset {elspotprices(where: {HourUTC: {_gte: \"2022-03-23\", _lt: \"2022-03-25\"}PriceArea: {_eq: \"DK2\"}} order_by: {HourDK: desc} limit: 100 offset: 0){HourUTC HourDK PriceArea SpotPriceDKK SpotPriceEUR }}"}
-            query = '''
-                SELECT "HourDK", "SpotPriceDKK"
-                FROM "elspotprices"
-                WHERE "HourDK" >= NOW() 
-                ORDER BY DATE_TRUNC('hour', "HourDK")
-                '''
-            result = get_energidataservice(query)
-            #return [li["PriceArea"] for li in [*result["result"]["records"]]]
-            return [*result["result"]["records"]]
+            if price_list[price_area] is not None:
+                return price_list[price_area]
+            else:
+                return None
+        else:
+            return price_list
 
 
 spot_price = SpotPrice()
+pprint(spot_price.prices("DK2"))
 
-
-print(spot_price.price_areas())
-print(spot_price.prices("DK2"))
-#charge_owners()
