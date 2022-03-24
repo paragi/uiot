@@ -71,7 +71,7 @@ class SpotPrice:
         result = self.get_energidataservice(query)
         return [li["PriceArea"] for li in [*result["result"]["records"]]]
 
-    # Get listy of current and future spot price
+    # Get list of current and future spot price
     def prices(self, price_area):
         query = '''
             SELECT "PriceArea", "HourDK", "SpotPriceDKK"
@@ -80,7 +80,6 @@ class SpotPrice:
             ORDER BY "PriceArea", DATE_TRUNC('hour', "HourDK")
             '''
         result = self.get_energidataservice(query)
-        # Format dictionary
 
         price_list = {}
         for entry in [*result["result"]["records"]]:
@@ -88,11 +87,9 @@ class SpotPrice:
             if entry["PriceArea"] not in price_list: price_list[entry["PriceArea"]] = {}
             price_list[entry["PriceArea"]][datetime.strptime(entry["HourDK"], '%Y-%m-%dT%H:%M:%S').hour] = round(entry["SpotPriceDKK"]/1000,2)
 
-        if price_area is not None:
-            if price_list[price_area] is not None:
-                return price_list[price_area]
-            else:
-                return None
+        if price_area is not None and price_list[price_area] is not None:
+            return price_list[price_area]
+
         else:
             return price_list
 
