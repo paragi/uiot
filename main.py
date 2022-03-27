@@ -58,11 +58,10 @@ def charge_owners():
     result_dict = json.loads(fileobj.read())
     print(json.dumps(result_dict, indent=2))
 
-
 class SpotPrice:
     def __init__(self):
         self._price_list: dict[Any, Any] = {}
-        self.update_time: datetime = datetime.min
+        self.update_time = Timestamp(0)
         self.success: bool = False
 
     # Retrieve dataset from SQL query with energi data service
@@ -101,7 +100,7 @@ class SpotPrice:
                         '''
         result = self.get_energidataservice(query)
         # pprint(result)
-        # print("Updating price list")
+        print("Updating price list")
         if result['success']:
             self._price_list = {}
 
@@ -115,47 +114,51 @@ class SpotPrice:
                     price = round(float(entry["SpotPriceEUR"]) / 1000, 3)
                     self._price_list[entry["PriceArea"]][timestamp] = price
                     # print(entry,timestamp, price)
-
+                    self.update_time = Timestamp(datetime.now())
                 except Exception as e:
                     pass
 
-        # self.prune_price_list()
+        self.prune_price_list()
         # print(self._price_list)
         self.success = result['success']
         return result['success']
 
     # Take away outdated entries (In case update fails)
     def prune_price_list(self):
-        # print("pruning")
-        now = datetime.now()
+        print("pruning")
+        now = int(Timestamp(datetime.now()))
         for price_area_name in self._price_list:
             #print(price_area_name)
-            for index, entry in enumerate(self._price_list[price_area_name]):
-                #print(index, entry)
-                if(now - entry['time'] > timedelta(hours=1) ):
-                    # print("Deleting:", index , self._price_list[price_area_name][index])
+            for index in self._price_list[price_area_name]:
+                #print(index, now - int(index))
+                if now - int(index) > 3600 :
+                    print("Deleting:", index , self._price_list[price_area_name][index])
                     del self._price_list[price_area_name][index]
-                pass
+                else:
+                    break
 
     def time_to_update(self):
         # print("Checking if it's time to update price list")
-        now = datetime.now()
+        now = int(Timestamp(datetime.now()))
         update = 1
         while True:
             try:
-                first_area = next(iter(self._price_list.items()))
+                if len(self._price_list) < 1: break
+                first_time_index = int(next(iter(self._price_list[next(iter(self._price_list))])))
+                # print("first a:",first_time_index, now - int(self.update_time) )
                 update = 2
-                #print(first_area[1][0]['time'],now - first_area[1][0]['time'], timedelta(hours=1))
-                if now - first_area[1][0]['time'] > timedelta(hours=1): break
+                if now - first_time_index > 3600: break
                 update = 3
-                if now - self.update_time > timedelta(hours=1): break
+                if (now - int(self.update_time)) > 3600: break
                 update = 4
+                if not self.success and now - int(self.update_time) > 60: break
             except Exception as e:
                 update = 5
-                #print(str(e))
+                print(update,repr(e))
                 break
             update = False
             break
+
         # print("Update: ",update)
         return bool(update)
 
@@ -199,12 +202,11 @@ for entry in table:
     print(entry.hour(),table[entry])
 print(ascii_graph(table))
 
-
 print("All spot prices:")
 table = spot_price.prices()
 for area in table:
     print(area, ascii_graph(table[area]) )
 
-#print("Spot priser DK2",spot_price.prices('DK2'))
-#pprint(spot_price.prices('DK2'))
-#spot_price.ascii_graph("DK2")
+print("Limit to 24 hours of DK2:")
+table = spot_price.prices('DK2')
+print(ascii_graph(dict(list(table.items())[:24])))
