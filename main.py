@@ -1,12 +1,12 @@
 import json
 import urllib.request
-from datetime import datetime, timedelta
 from pprint import pprint
 from typing import Any
 import textgraph
-
 import requests
 
+# Local modules
+from timestamp import *
 
 def test1():
     # Constructing more specific searches seems to require authorisation
@@ -91,31 +91,36 @@ class SpotPrice:
         return [li["PriceArea"] for li in [*result["result"]["records"]]]
 
     # Get current spot price list, from now
-    # NB. Sometimes "SpotPriceDKK" is NULL. Uses SpotPriceEUR
+    # Creates a list of price areas, containing lists of time tags and spot price
     def update_price_list(self):
         query = '''
-                        SELECT "PriceArea", "HourDK", "SpotPriceEUR"
+                        SELECT "PriceArea", "HourUTC", "SpotPriceEUR"
                         FROM "elspotprices"
-                        WHERE "HourDK" >= NOW()
-                        ORDER BY "PriceArea", DATE_TRUNC('hour', "HourDK")
+                        WHERE "HourUTC" >= NOW()
+                        ORDER BY "PriceArea", "HourUTC"
                         '''
         result = self.get_energidataservice(query)
         # pprint(result)
         # print("Updating price list")
         if result['success']:
             self._price_list = {}
-            for entry in [*result["result"]["records"]]:
-                if entry["PriceArea"] not in self._price_list: self._price_list[entry["PriceArea"]] = []
+
+            for entry in result["result"]["records"]:
                 try:
-                    time = datetime.strptime(entry["HourDK"], '%Y-%m-%dT%H:%M:%S')
-                    price = round(float(entry["SpotPriceEUR"]) / 1000, 2)
-                    self._price_list[entry["PriceArea"]].append({'time': time, 'price': price})
-                except Exception:
+                    if not entry["PriceArea"] in self._price_list:
+                        self._price_list[entry["PriceArea"]] = {}
+                    # print(entry)
+
+                    timestamp = Timestamp(entry["HourUTC"], '%Y-%m-%dT%H:%M:%S%z')
+                    price = round(float(entry["SpotPriceEUR"]) / 1000, 3)
+                    self._price_list[entry["PriceArea"]][timestamp] = price
+                    # print(entry,timestamp, price)
+
+                except Exception as e:
                     pass
 
-        self.prune_price_list()
-
-        # pprint(self.price_list)
+        # self.prune_price_list()
+        # print(self._price_list)
         self.success = result['success']
         return result['success']
 
@@ -151,7 +156,7 @@ class SpotPrice:
                 break
             update = False
             break
-        # print(update)
+        # print("Update: ",update)
         return bool(update)
 
     # Get list of current and future spot price
@@ -160,47 +165,46 @@ class SpotPrice:
             self.update_price_list()
 
         if price_area is not None and price_area in self._price_list:
-            price_list = [(entry["price"]) for entry in [*self._price_list[price_area]]]
-            return price_list
+            return self._price_list[price_area]
         else:
-            area_list = {}
-            for price_area in [*self._price_list]:
-                area_list[price_area] = [(entry["price"]) for entry in [*self._price_list[price_area]]]
-            return area_list
+            return self._price_list
 
-    def ascii_graph(self, price_area: list = None, x_lable: bool = True, y_lable: bool = True):
-        def print_graph(area):
-            # print("graph", area)
-
-            table = self.prices(area)
-            if y_lable: print(max(table))
-            print(textgraph.spark(table))
-            if x_lable:
-                x_scale = ""
-                first_element = next(iter(self._price_list[area]))
-                last_element = list(iter(self._price_list[area]))[-1]
-                first_hour = str(first_element['time'].hour)
-                last_hour = str(last_element['time'].hour)
-                if len(first_hour)+len(last_hour)+1 <= len(table):
-                    x_scale += first_hour
-                    x_scale += " "*(len(table)-len(first_hour)-len(last_hour))
-                else:
-                    x_scale += " "*(len(table)-len(last_hour))
-                x_scale += last_hour
-                print( x_scale)
-
-        if price_area is not None:
-            #price_area in self._price_list:
-            print_graph(price_area)
+def ascii_graph(table: dict, x_lable: bool = True, y_lable: bool = True):
+    ascii_graph = ""
+    data = [*table.values()]
+    x_list = [time.hour() for time in table]
+    if y_lable:
+        ascii_graph += str(max(data)) + "\n"
+    ascii_graph += textgraph.spark(data) + "\n"
+    if x_lable:
+        first_hour = str(x_list[0])
+        last_hour = str(x_list[-1])
+        if len(first_hour)+len(last_hour)+1 <= len(data):
+            ascii_graph += first_hour
+            ascii_graph += " "*(len(data)-len(first_hour)-len(last_hour))
         else:
-            for price_area in [*self._price_list]:
-                print_graph(price_area)
+            ascii_graph += " "*(len(data)-len(last_hour))
+        ascii_graph += last_hour + "\n"
+    return ascii_graph
 
-
-
-
-
+# Usages
 spot_price = SpotPrice()
+
+print("Price area codes:")
 print(spot_price.areas())
-print("Spot priser DK2",spot_price.prices('DK2'))
-spot_price.ascii_graph("DK2")
+
+print("Current and future spot prices for DK2:")
+table = spot_price.prices('DK2')
+for entry in table:
+    print(entry.hour(),table[entry])
+print(ascii_graph(table))
+
+
+print("All spot prices:")
+table = spot_price.prices()
+for area in table:
+    print(area, ascii_graph(table[area]) )
+
+#print("Spot priser DK2",spot_price.prices('DK2'))
+#pprint(spot_price.prices('DK2'))
+#spot_price.ascii_graph("DK2")
