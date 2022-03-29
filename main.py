@@ -1,12 +1,12 @@
 import json
 import urllib.request
 from pprint import pprint
-from typing import Any
 import textgraph
 import requests
+from datetime import *
 
 # Local modules
-from timestamp import *
+
 
 def test1():
     # Constructing more specific searches seems to require authorisation
@@ -61,7 +61,7 @@ def charge_owners():
 class SpotPrice:
     def __init__(self):
         self._price_list: dict[Any, Any] = {}
-        self.update_time = Timestamp(0)
+        self.update_time: float  = 0
         self.success: bool = False
 
     # Retrieve dataset from SQL query with energi data service
@@ -110,11 +110,11 @@ class SpotPrice:
                         self._price_list[entry["PriceArea"]] = {}
                     # print(entry)
 
-                    timestamp = Timestamp(entry["HourUTC"], '%Y-%m-%dT%H:%M:%S%z')
+                    timestamp = datetime.strptime(entry["HourUTC"], '%Y-%m-%dT%H:%M:%S%z').timestamp()
                     price = round(float(entry["SpotPriceEUR"]) / 1000, 3)
                     self._price_list[entry["PriceArea"]][timestamp] = price
                     # print(entry,timestamp, price)
-                    self.update_time = Timestamp(datetime.now())
+                    self.update_time = int(datetime.now().timestamp())
                 except Exception as e:
                     pass
 
@@ -126,7 +126,7 @@ class SpotPrice:
     # Take away outdated entries (In case update fails)
     def prune_price_list(self):
         print("pruning")
-        now = int(Timestamp(datetime.now()))
+        now = datetime.now().timestamp()
         for price_area_name in self._price_list:
             #print(price_area_name)
             for index in self._price_list[price_area_name]:
@@ -139,7 +139,7 @@ class SpotPrice:
 
     def time_to_update(self):
         # print("Checking if it's time to update price list")
-        now = int(Timestamp(datetime.now()))
+        now = datetime.now().timestamp()
         update = 1
         while True:
             try:
@@ -175,7 +175,7 @@ class SpotPrice:
 def ascii_graph(table: dict, x_lable: bool = True, y_lable: bool = True):
     ascii_graph = ""
     data = [*table.values()]
-    x_list = [time.hour() for time in table]
+    x_list = [datetime.fromtimestamp(time).hour for time in table]
     if y_lable:
         ascii_graph += str(max(data)) + "\n"
     ascii_graph += textgraph.spark(data) + "\n"
@@ -190,7 +190,6 @@ def ascii_graph(table: dict, x_lable: bool = True, y_lable: bool = True):
         ascii_graph += last_hour + "\n"
     return ascii_graph
 
-# Usages
 spot_price = SpotPrice()
 
 print("Price area codes:")
@@ -198,8 +197,9 @@ print(spot_price.areas())
 
 print("Current and future spot prices for DK2:")
 table = spot_price.prices('DK2')
+
 for entry in table:
-    print(entry.hour(),table[entry])
+    print(datetime.fromtimestamp(entry).hour,table[entry])
 print(ascii_graph(table))
 
 print("All spot prices:")
