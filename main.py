@@ -1,74 +1,119 @@
-# -*- coding: utf-8 -*-
-import os
-
-micro_controler = (os.uname().machine == 'ESP module with ESP8266')
-if micro_controler:
+try:
     from machine import Pin, I2C
-    import ssd1306
+except:
+    pass
+try:
+    from ssd1306 import SSD1306_I2C
+except:
+    pass
+try:
+    import usocket as socket  # importing socket
+except:
+    import socket
+import network  # importing network
+import esp  # importing ESP
+import ubinascii
+esp.osdebug(None)
+import gc
+import random
+#import string
+from math import *
 
-class Dispplay_conf:
-    size_x = 128
-    size_y = 64
 
-class Display_stub:
-    def __init__(self, size_x, size_y):
-        self.size_x = size_x
-        self.size_y = size_y
+class Display(SSD1306_I2C):
+    def __init__(self):
+        width, height = 128, 64
+        self.font_height = 8
+        self.font_width = 8
 
-    def text(self, str, x, y, c = 1):
-        print(str)
+        i2c = I2C(scl=Pin(5), sda=Pin(4))
+        super().__init__(width, height, i2c)
 
-    def pixel(self, x, y, c):
-        pass
+        self.text('Init 1', 0, 0)
 
-    def show(self):
-        pass
-    def invert(self, state):
-        pass
+        # Sinewave
+        resolution = radians(360 / width)
+        for x in range(width):
+            y = int(height / 2 + height / 4 * sin(x * resolution))
+            self.pixel(x, y, 1)
+        for x in range(width):
+            y = int(height / 2 + height / 5 * sin(x * resolution))
+            self.pixel(x, y, 1)
+        for x in range(width):
+            y = int(height / 2 + height / 6 * sin(x * resolution))
+            self.pixel(x, y, 1)
+        self.show()
 
-def bar_chart_function(data, x, y, width, height):
-    elements = len(data)
-    bar_width = int(x / elements)
-    y_scale = height / max(data)
-    for i in range(0, elements - 1):
-        x_start = i * bar_width
-        if micro_controler:
-            display.fill_rect(x_start, y, bar_width, int(y_scale * data[i]),1)
-        else:
-            print(x, Dispplay_conf.size_y - 1, x + bar_width, int(y_scale * data[i]))
+    def text_x_center(self, str, y=0, col=1):
+        text_length = len(str)
+        x = (self.width-1-text_length*self.font_width)//2
+        x = min(self.width-self.font_width-1,max(0,x))
+        y = min(self.height-self.font_height-1, max(0,y))
+        self.text(str, x, y, col)
 
-#ssd1306_gfx.SSD1306_I2C_SETUP.bar_chart = bar_chart_function
-
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    if micro_controler:
-        # Set LED on
-        led = Pin(2, Pin.OUT)
-        led.value(0)
+    # Initilaization
 
-        # Setup ssd1306 OLED display
-        display = ssd1306.SSD1306_I2C(Dispplay_conf.size_x, Dispplay_conf.size_y, I2C(sda=Pin(4), scl=Pin(5)))
-        #display = ssd1306_gfx.SSD1306_I2C_SETUP(Pin(4), Pin(5), Dispplay_conf.size_x, Dispplay_conf.size_y)
-    else:
-        display = Display_stub(Dispplay_conf.size_y, Dispplay_conf.size_x)
-        
-    display.bar_chart = bar_chart_function    
-    #display.fill(1)
-    display.invert(True)
+    # Led
+    print("Init 1")
+    led = Pin(2, Pin.OUT)
+    led.value(0)
 
-    print(os.uname().machine)
-    #display.text(os.uname().machine, 0, 0, 1)
-    display.text('Nu pris: 5,45 Kr.', 0, 0, 1)
-    display.text('3t slot: kl 14', 0, 10, 1)
-    display.text('6t slot: kl 12', 0, 20, 1)
-    display.pixel(63, 47, 1)
+    # Display
+    print("init 2")
+    display = Display()
+    led.value(1)
+    display.text_x_center('Init 2', 0)
+    display.show()
+    gc.collect()
+
+    # Network configuration
+    # Hvis credentials: opret forbindelse
+    # Hvis ikke forbindelse: opret forbindelse til fall back netværk
+    # Ellers og Hvis ikke forbindelse: Opret Access Point
+    display.fill(0)
+    ssid = 'CP-IOT'  # Set access point name
+    pw = '0'.join([chr(int(random.getrandbits(5) / 1.23) + 97) for _ in range(4)] + ['1','2','3','4'])
+
+    display.text_x_center('Connect to WiFi', 0)
+    display.text_x_center(ssid, display.height//4)
+    display.text_x_center('Password:', display.height//2)
+    display.text_x_center(pw, display.height - display.height//4)
     display.show()
 
-    print("Done")
-    if micro_controler:
-        led.value(1)
-    display.invert(False)
+    id = str(ubinascii.hexlify(machine.unique_id()).decode('utf-8'))
+    print("Machine ID:",id)
 
-    spot_price = [1.23,2.3,3.8,5.9,6.2,3.7,2.1,0.3,0.3,0.3,0.3,0.3,0.3,0.3,1.23,2.3,3.8,5.9]
-    display.bar_chart(spot_price, 0, Dispplay_conf.size_y-1, Dispplay_conf.size_x, Dispplay_conf.size_y-24)
+    access_point = network.WLAN(network.access_point_IF)
+    access_point.active(True) 
+    access_point.config(essid=ssid, password=pw)
+
+    while access_point.active() == False:
+        pass
+
+    print('Connection is successful')
+    print(access_point.ifconfig())
+
+    display.fill(0)
+    display.text_x_center('Init 3', 0)
     display.show()
+
+    def web_page():
+        html = """<html><head><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+      <body><h1>Welcome to microcontrollerslab!</h1></body></html>"""
+        return html
+
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # creating socket object
+    s.bind(('', 80))
+    s.listen(5)
+    while True:
+        conn, addr = s.accept()
+        print('Got a connection from %s' % str(addr))
+        request = conn.recv(1024)
+        print('Content = %s' % str(request))
+        response = web_page()
+        conn.send(response)
+        conn.close()
+
+    print("init 3")
