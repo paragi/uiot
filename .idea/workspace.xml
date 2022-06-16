@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="525a5bd2-3bda-451b-b380-e402563bf176" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/libraries/MicroPython.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/elpris.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/elpris.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/energi_dataservice.py" beforeDir="false" afterPath="$PROJECT_DIR$/energi_dataservice.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="MicroPythonDevices" devicePath="/dev/ttyUSB0" autoDetectDevicePath="false" />
+  <component name="ProjectId" id="2Ag6jeeYuhKPpYlemNhzi2QWUgE" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "com.digi.micropython.xbee_platform": "",
+    "com.digi.pycharm.always_remove_project_dir": "false",
+    "com.digi.pycharm.compile_sources": "false",
+    "com.digi.pycharm.digi_platform": "",
+    "com.digi.pycharm.do_not_show_mp_mode_question": "false",
+    "com.digi.pycharm.do_not_show_select_device_warning": "false",
+    "com.digi.pycharm.skip_equal_files": "true",
+    "com.digi.pycharm.transfer_sources": "false",
+    "settings.editor.selected.configurable": "com.jetbrains.micropython.configurable"
+  }
+}]]></component>
+  <component name="RunManager">
+    <configuration name="Flash main.py" type="MicroPythonConfigurationType" factoryName="MicroPython" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/main.py">
+      <module name="elpris" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="MicroPython.Flash main.py" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="525a5bd2-3bda-451b-b380-e402563bf176" name="Changes" comment="" />
+      <created>1655419018151</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1655419018151</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>
