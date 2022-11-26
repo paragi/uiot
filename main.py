@@ -23,6 +23,7 @@ def connect():
 
     station.active(True)
     station.connect(config['wifi']['ssid'].value, config['wifi']['key'].value)
+    station.connect(config['wifi']['ssid'].value, config['wifi']['key'].value)
 
     while station.isconnected() == False:
         pass

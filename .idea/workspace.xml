@@ -4,26 +4,10 @@
     <option name="SCOPE_TYPE" value="3" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="525a5bd2-3bda-451b-b380-e402563bf176" name="Changes" comment="Added access point">
-      <change afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/main-core.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/picoweb/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/picoweb/utils.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/service_blink.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/service_count.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/service_webserver.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/www/favicon.ico" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/www/index.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/www/logo.gif" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/www/logo.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/www/theme.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/elpris.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/elpris.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
+    <list default="true" id="525a5bd2-3bda-451b-b380-e402563bf176" name="Changes" comment="__path__ error fixed">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main_blink.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pyvenv.cfg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/service_webserver.py" beforeDir="false" afterPath="$PROJECT_DIR$/service_webserver.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -94,7 +78,7 @@
       <recent name="$PROJECT_DIR$" />
     </key>
   </component>
-  <component name="RunManager" selected="MicroPython.Flash main.py">
+  <component name="RunManager" selected="MicroPython.Flash service_webserver.py">
     <configuration name="Flash MicroWebSrv2" type="MicroPythonConfigurationType" factoryName="MicroPython" nameIsGenerated="true" path="$PROJECT_DIR$/MicroWebSrv2">
       <module name="elpris" />
       <method v="2" />
@@ -191,7 +175,14 @@
       <option name="project" value="LOCAL" />
       <updated>1669477671371</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="__path__ error fixed">
+      <created>1669496756621</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1669496756621</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="UnknownFeatures">
@@ -212,6 +203,7 @@
     <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
     <MESSAGE value="Added webserver" />
     <MESSAGE value="Added access point" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added access point" />
+    <MESSAGE value="__path__ error fixed" />
+    <option name="LAST_COMMIT_MESSAGE" value="__path__ error fixed" />
   </component>
 </project>
