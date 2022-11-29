@@ -1,24 +1,26 @@
 :root {
-    --dark: #111;
+    --dark1: #111;
     --dark2: #333;
     --dark3: #555;
-    --light: #fff;
+    --medium: #777;
+    --light1: #fff;
     --light2: #9ff;
+    /* font-size: 2vw;
+    */
 }
 html {
     height: 100%;
     box-sizing: border-box;
-    background: var(--dark)
+    background: var(--dark1)
 }
 body {
     font-family: "Arial";
-    background: var(--dark)
+    background: var(--dark1)
     margin: 0;
     padding: 0;
     position: relative;
     min-height: 100%;
-    color: var(--light);
-
+    color: var(--light1);
 }
 .logo {
   position: absolute;
@@ -49,44 +51,33 @@ body {
     display: inline-block;
     margin-bottom: 5px;
     margin-top: 10px;
-    color: var(--light);
-
+    color: var(--light1);
 }
 
-#navigation {
-    margin: 0px;
+.navigation {
     margin-bottom: 20px;
-    padding: 0px;
-    color: var(--light);
-
+    color: var(--light1);
 }
 
 .navigationlink {
-    font-family: "Helvetica";
     text-decoration: none;
     font-weight: 800;
-    font-size: 11px;
-    height: 52px;
-    letter-spacing: 1px;
-    margin: 0 10px;
-    padding-left: 0px;
-    padding-right: 0px;
-    position: relative;
     transition: color 0.3s;
     color: var(--light);
-    border-bottom-color: var(--light);
+    border-bottom-color: var(--light1);
+    padding: 5px;
 }
 
 .navigationlink:hover {
-    background: var(--dark3);
+    background: var(--medium);
 }
 
 .activelink:hover {
-    border-bottom-color: var(--light);
+    border-bottom-color: var(--light2);
 }
 
 .activelink {
-    border-bottom: 2px solid var(--light);
+    border-bottom: 2px solid var(--light2);
     transition: color 0.3s;
 }
 
@@ -104,10 +95,12 @@ table{
   border-radius: 10px;
   border: 1px solid black;
   background: var(--dark2);
+  padding: 5px;
 }
 
 td{
   color: var(--light);
+  vertical-align: top;
 }
 
 input{
@@ -115,18 +108,6 @@ input{
    color: var(--light);
    border:2px inset var(--dark2);
 }
-
-input[type="checkbox"]{
-  width: 20px; height: 20px;
-  border-radius: 50%;
-  border:2px inset var(--dark2);
-  transition: box-shadow .3s;
-  background: #a20;
-  cursor: pointer;
-  appearance: none; -webkit-appearance: none;
- }
-
-input:checked{ box-shadow: inset 0 0 0 20px #0b0; }
 
 #footer {
     background: var(--dark2);
@@ -144,3 +125,75 @@ input:checked{ box-shadow: inset 0 0 0 20px #0b0; }
     color: var(--light);
     font-weight: 600;
 }
+
+/* LED like checkbox
+*/
+input[type="checkbox"]{
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border:2px inset var(--dark2);
+  transition: box-shadow .3s;
+  background: #a20;
+  cursor: pointer;
+  appearance: none; -webkit-appearance: none;
+ }
+
+input:checked{ box-shadow: inset 0 0 0 20px #0b0; }
+
+/* Slider switch checkbox
+*/
+
+.slider_l {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+
+}
+
+.slider_l input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #c00;
+  -webkit-transition: .4s;
+  transition: .4s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+  border-radius: 50%
+}
+
+input:checked + .slider {
+  background-color: #0c0;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #cc0;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+
