@@ -12,6 +12,26 @@ I terminalen:
     (... opret token vis PyCharm)
 
 ### flash ESP32 med micropython
+
+    pip install esptool
+
+Slet hukommelsen:
+
+Linux:
+
+    esptool.py --port /dev/ttyUSB0 erase_flash
+    esptool.py --port /dev/ttyUSB0 erase_flash
+
+Window
+
+    esptool.py --port COM4 erase_flash
+
+Installer micropython:
+
+    esptool.py --chip esp32 --port /dev/ttyUSB0 write_flash -z 0x1000 esp32-20220618-v1.19.1.bin
+
+Hold boot microswitchen (til højre for USB kablet) til den starter
+
 ### connect to WiFi
 In REPL and type:
 
@@ -28,6 +48,5 @@ test:
 In REPL and type:
 
     import upip
-    upip.install('micropython-uasyncio')
     upip.install('micropython-pkg_resources')
     upip.install('micropython-ulogging')

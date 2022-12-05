@@ -1,4 +1,8 @@
 # ESP32 blink developer board LED (pin 2)
+try:
+    import uasyncio as asyncio
+except:
+    import asyncio
 
 async def start():
     print("Starting blink service")

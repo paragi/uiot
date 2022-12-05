@@ -7,15 +7,62 @@
 # upip.install('micropython-uasyncio')
 # upip.install('micropython-pkg_resources')
 
+# captive portal:
+# https://github.com/anson-vandoren/esp8266-captive-portal
+# https://lemariva.com/blog/2019/01/white-hacking-wemos-captive-portal-using-micropython
+
+
 import picoweb
 import network
 import os
-
 try:
     import uasyncio as asyncio
 except Exception as e:
     import asyncio
+
 from common import *
+from config import config
+
+
+def mimetype(file_name):
+    extensions = ('gif', 'png', 'jpg', 'ico', 'css', 'json')
+    mimetypes = ('image/gif', 'image/png', 'image/jpg', 'image/x-icon', 'text/css', 'application/json')
+    try:
+        i = extensions.index(file_name.rsplit('.', 1)[1].lower())
+        return mimetypes[i]
+    except Exception as e:
+        return 'text/html; charset=utf-8'
+
+
+# Static file handler - needed expand to handle gif, ico and css files
+def static_file_handler(request, response):
+    file_name = config['webserver']['document_root'].value + request.path
+    debug("Request file: {}".format(file_name))
+    header = {'Cache-Control': 'public, max - age = 15552000'}
+    yield from service.webserver.sendfile(response, file_name, content_type=mimetype(file_name), headers=header)
+    return True
+
+
+def start(host=None, port=None, routes=None):
+    global service
+
+    service.webserver = picoweb.WebApp(None, routes)
+    service.webserver.init()
+    service.webserver.debug = int(True)
+    service.webserver.log = None
+    if service.webserver.debug >= 0:
+        import ulogging
+        service.webserver.log = ulogging.getLogger("picoweb")
+        service.webserver.log.setLevel(ulogging.DEBUG)
+
+    task = asyncio.start_server(service.webserver._handle, host=host, port=port)
+    print("+---------------------------------------------+")
+    print(" Webserver running at http://%s:%d " % (host, port))
+    print("+---------------------------------------------+")
+    return task
+
+
+# Dynamic pages
 
 menu_item = (
     'dashboard',
@@ -24,18 +71,15 @@ menu_item = (
 )
 
 html = {
-    'begin': '<form method="POST"><input type="text" name="function" hidden><table>\n',
+    'begin': '<form method="POST"><input type="text" name="function" value="none" hidden><table>\n',
     'header': '<tr><td><h1>{0}</h1></td></tr>\n',
-    'button': '<tr><td colspan="2"><input type="submit" value="{0}" '
-              'onclick="document.getElementsByName(\'function\').value = \'{0}\';"></td></tr>\n',
-    'slider_action': '<tr><td><label>{0}</label></td><td><label class="slider_l">\n'
-                     '<input name="{1}"type="checkbox" {2} onclick="document.forms[0].submit()">'
-                     '<span class="slider round"></span></label></td></tr>\n',
+    'button': '<tr><td colspan="2"><button type="button" onclick="cmd(\'{1}\');">{0}</button></td></tr>\n',
     'slider': '<tr><td><label>{0}</label></td><td><label class="slider_l">\n'
-              '<input name="{0}"type="checkbox" {1}><span class="slider round"></span></label></td></tr>\n',
-    'checkbox': '<tr><td><label>{0}</label></td><td><input type="checkbox" name="{0}" {1}"></td></tr>\n',
-    'text': '<tr><td><label>{0}</label></td><td><input type="text" name="{0}" value="{1}"></td></tr>\n',
-    'password': '<tr><td><label>{0}</label></td><td><input type="password" name="{0}" value="{1}"></td></tr>\n',
+                     '<input type="checkbox" {2} onclick="cmd(\'{1} \' + this.checked);this.checked!=this.checked">\n'
+                     '<span class="slider round"></span></label></td></tr>\n',
+    'checkbox': '<tr><td><label>{0}</label></td><td><input type="checkbox" name="{1}" {2}"></td></tr>\n',
+    'text': '<tr><td><label>{0}</label></td><td><input type="text" value="{2}" onblur="cmd(\'{1} \' + this.value)"></td></tr>\n',
+    'password': '<tr><td><label>{0}</label></td><td><input type="password" value="{2}" onblur="cmd(\'{1} \' + this.value)"></td></tr>\n',
     'end': '</table></form>\n'
 }
 
@@ -43,10 +87,19 @@ html = {
 def send_page(request, response, page_content):
     document = '''<!DOCTYPE html>
         <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1"> 
+        <meta charset="UTF-8">
         <link rel="stylesheet" href="/theme.css" type="text/css">
         <link rel="icon" type="image/x-icon" href="/favicon.ico">
         <title>{0}</title>
+        <script>
+        function cmd(cmd){{
+            var ajax = new XMLHttpRequest();
+            ajax.open("POST", "api", true);
+            ajax.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            ajax.send('cmd=' + cmd);
+        }} 
+        </script>
         </head>
         <body>
         <div id="all">
@@ -56,10 +109,7 @@ def send_page(request, response, page_content):
         {1}
         </header>
         <main id="main">
-        <form method="POST">
-        <input type="submit" hidden />
         {2}
-        </form>        
         </main>
         <footer id="footer">
         Pirates foot
@@ -95,88 +145,53 @@ def pre_process_request(request):
     debug(" Dynamic page request from client: ", page_name, request.method)
     request.page_name = page_name
 
-
-from relay import Relay
-
-relay = Relay(8)
-
-
 def dashboard_page(request, response):
     pre_process_request(request)
-    if request.method == "POST":
-        yield from request.read_form_data()
-        debug(json.dumps(request.form), DEBUG)
-        # TODO: authenticate
-        for form_name in request.form:
-            debug("processing POST:", form_name, DEBUG)
-            if form_name == 'function':
-                debug("Function:", str(request.form[form_name]), DEBUG)
-                continue
-            try:
-                # TODO: config relay names
-                index = int(str(form_name).split('', 1)[1]) - 1
-                relay.set(index, str(request.form[form_name]))
-            except Exception as e:
-                debug("Form POST error:{}".format(e), ERROR)
-
     content = html['begin']
-    for index in range(0, 8):
-        content += html['slider_action'].format(relay.name(index), "R" + str(index), 'checked' if relay.get(index) else '')
+    for i in range(0, service.relay.relays):
+        content += html['slider'].format(service.relay.name(i), f"relay {i}", '')
     content += html['end']
     yield from send_page(request, response, content)
+    return True
 
 
 def setup_page(request, response):
+    global config
+    debug(f"Setup page {request.method}", DEBUG)
     pre_process_request(request)
-    if request.method == "POST":
-        yield from request.read_form_data()
-        # request.read_form_data()
-        debug(json.dumps(request.form), DEBUG)
-        # TODO: authenticate
-        for form_name in request.form:
-            debug("processing POST:{}".format(form_name), DEBUG)
-            if form_name == 'function':
-                debug("Function:{}".format(request.form[form_name]))
-                continue
-            try:
-                (group, field) = str(form_name).split('-', 1)
-                if field in config[group].keys():
-                    # TODO: validate
-                    config[group][field].value = str(request.form[form_name])
-            except Exception as e:
-                debug("Form POST error:{}".format(e))
-        save_config()
-
     content = html['begin']
-    for label in config.keys():
-        content += html['header'].format(label)
-        for field in config[label].keys():
-            form_name = '%s-%s' % (label, field)
+    for label in sorted(config.keys()):
+        header_done = False
+        for field in sorted(config[label].keys()):
+            if config[label][field].advanced: continue
+            if not header_done:
+                content += html['header'].format(label)
+                header_done = True
             if config[label][field].type == 'text':
-                content += html['text'].format(form_name, config[label][field].value)
+                content += html['text'].format(field, 'config/%s %s' % (label, field), config[label][field].value)
             if config[label][field].type == 'password':
-                content += html['password'].format(form_name, config[label][field].value)
+                content += html['password'].format(field, 'config/%s %s' % (label, field), config[label][field].value)
             elif config[label][field].type == 'checkbox':
-                content += html['slider'].format(form_name, 'checked' if config[label][field].value == 'on' else '')
+                content += html['slider'].format(field, 'config/%s %s' % (label, field), 'checked' if config[label][field].value == 'on' else '')
             elif config[label][field].type == 'slider':
-                content += html['slider'].format(form_name, 'checked' if config[label][field].value == 'on' else '')
-    content += html['button'].format('Save')
-    content += html['button'].format('Factory reset')
+                content += html['slider'].format(field, '%s-%s' % (label, field), 'checked' if config[label][field].value == 'on' else '')
+    content += html['button'].format('Save configuration', 'config data save')
+    content += html['button'].format('Factory reset', 'config data reset')
     content += html['end']
 
     yield from send_page(request, response, content)
+    return True
 
 
 def status_page(request, response):
-    pre_process_request(request)
-    content = '<table>\n'
-
     def add_row(label, status):
         return '<tr><td>{0}</td><td>{1}</td></tr>\n'.format(label, status)
 
     def add_header(label):
         return '<tr><td colspan="2"><h1>{0}</h1></td></tr>\n'.format(label)
 
+    pre_process_request(request)
+    content = '<table>\n'
     content += add_header('Network')
     content += add_row('Access point mode', 'Yes' if network.WLAN(network.AP_IF).active() else 'No')
     content += add_row('Connected to WiFi', 'Yes' if network.WLAN(network.STA_IF).active() else 'No')
@@ -196,73 +211,23 @@ def status_page(request, response):
     content += add_row('Disk space free', str((s[0] * s[3]) // 1024) + ' KB')
     content += '</table>\n'
     yield from send_page(request, response, content)
-
-
-def mimetype(file_name):
-    extensions = ('gif', 'png', 'jpg', 'ico', 'css', 'json')
-    mimetypes = ('image/gif', 'image/png', 'image/jpg', 'image/x-icon', 'text/css', 'application/json')
-    try:
-        i = extensions.index(file_name.rsplit('.', 1)[1].lower())
-        return mimetypes[i]
-    except Exception as e:
-        return 'text/html; charset=utf-8'
-
-
-# Static file handler - needed expand to handle gif, ico and css files
-def static_file_handler(request, response):
-    file_name = config['webserver']['document root'].value + request.path
-    debug("Request file: {}".format(file_name))
-    yield from app.sendfile(response, file_name, content_type=mimetype(file_name))
+    return True
 
 
 # Use pyhtml ?
-
-
 # Nor really implementet yet :)
 def api_handler(request, response):
-    debug('API request from client:{}'.format(request.UserAddress))
-    name = request.path.rsplit('.', 1)[0].lower().rsplit('/', 1)[1]
-    print("Q:{}".format(request._method, name), DEBUG)
-    debug(request.GetPostedURLEncodedForm())
-    writer = '{"id":"1"}'
-    request.response.ReturnOk(writer)
+    global service
+    pre_process_request(request)
+    debug(f'API request :{request.path}')
+    if request.method == "POST":
+        yield from request.read_form_data()
+        debug(f"Request POST data: {request.form}")
+        if 'cmd' in request.form:
+            reply = service.cmd(request.form['cmd'])
+    yield from send_page(request, response, reply)
+    return True
 
-
-# Custom start server - Needed to allow multiple tasks to run concurrently.
-app = None
-
-
-def start():
-    global app
-    routes = [
-        ("/", dashboard_page),
-        ("/index.html", dashboard_page),
-        ("/dashboard.html", dashboard_page),
-        ("/setup.html", setup_page),
-        ("/status.html", status_page),
-        ("/theme.css", static_file_handler),
-        ("/favicon.ico", static_file_handler),
-        ("/logo.png", static_file_handler),
-        ("/logo.gif", static_file_handler),
-        ("/test.pyhtml", static_file_handler),
-        # (re.compile("^/iam/(.+)"), hello),
-    ]
-
-    app = picoweb.WebApp(None, routes)
-    app.init()
-    app.debug = int(True)
-    app.log = None
-    if app.debug >= 0:
-        import ulogging
-        app.log = ulogging.getLogger("picoweb")
-        app.log.setLevel(ulogging.DEBUG)
-    task = asyncio.start_server(app._handle, host=config['webserver']['host ip'].value,
-                                port=config['webserver']['port'].value)
-    print("+---------------------------------------------+")
-    print(" Webserver running at http://%s:%d " % (
-        config['webserver']['host ip'].value, config['webserver']['port'].value))
-    print("+---------------------------------------------+")
-    return task
 
 
 if __name__ == '__main__':
@@ -322,10 +287,10 @@ if __name__ == '__main__':
         print(station.ifconfig())
 
 
-    async def start_services():
+    async def start_services(host=None, port=None, routes=None):
         gc.collect()
         tasks = [
-            asyncio.create_task(start()),
+            asyncio.create_task(start(host=None, port=None, routes=None)),
         ]
         await asyncio.gather(*tasks)
         debug("All tasks has completed or ended with errors", ERROR)
