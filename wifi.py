@@ -10,8 +10,8 @@ from common import *
 
 class Wifi:
     def __int__(self):
-        self.ap = None
-        self.sta = None
+        self.ap_if = None
+        self.sta_if = None
         self.ip = 'None'
         self.mask = ''
         self.gateway = ''
@@ -25,23 +25,22 @@ class Wifi:
         if not key:  key = b"pirate key"
         if not channel or 1 > channel > 13: channel = self.scan(best=True)
         debug(f"Creating WiFI access point {ssid} at channel {channel}")
-        #if self.sta and self.sta.active():
-        #    self.sta.active(False)
-        self.ap = network.WLAN(network.AP_IF)
+        self.ap_if = network.WLAN(network.AP_IF)
         try:
             if type(key) == 'str': key = key.encode('UTF-8')
-            # self.ap.config(reconnects=5)
-            self.ap.ifconfig(('10.0.0.1', '255.255.255.0', '10.0.0.1', '10.0.0.1'))
-            self.ap.config(essid=ssid, password=key, channel=channel,authmode=network.AUTH_WPA_WPA2_PSK)
-            self.ap.active(True)
-            nc = self.ap.ifconfig()
+            # self.ap_if.config(reconnects=5)
+            self.ap_if.ifconfig(('10.0.0.1', '255.255.255.0', '10.0.0.1', '10.0.0.1'))
+            self.ap_if.config(essid=ssid, password=key, channel=channel,authmode=network.AUTH_WPA_WPA2_PSK)
+            self.ap_if.active(True)
+            # if self.sta_if: self.sta_if.active(False)
+            nc = self.ap_if.ifconfig()
             debug(f'Network interface settings: {nc[0]}</br>{nc[1]}</br>{nc[2]}</br>{nc[3]}')
         except Exception as e:
             debug(f"Unable to create access point: {e}", ERROR)
             self.ip = ''
             return False
 
-        (self.ip, self.mask, self.gateway, self.dns) = self.ap.ifconfig()
+        (self.ip, self.mask, self.gateway, self.dns) = self.ap_if.ifconfig()
         debug("+------------------------------------------+")
         debug("   Acces point: ")
         debug(f"   SSID: {ssid} at channel {channel}")
@@ -52,24 +51,22 @@ class Wifi:
 
     def connect(self, ssid, key):
         debug(f"Connecting to WiFI {ssid} ")
-        # if self.ap :
-        #    self.ap.active(False)
-        self.sta = network.WLAN(network.STA_IF)
-        if self.sta and self.sta.isconnected() and ssid == self.sta.config('essid'):
+        self.sta_if = network.WLAN(network.STA_IF)
+        if self.sta_if and self.sta_if.isconnected() and ssid == self.sta_if.config('essid'):
             debug(f"Already connected to {ssid}")
             return True
-        self.sta.active(True)
+        self.sta_if.active(True)
         debug(f"connecting to {ssid} key:{key}", DEBUG)
-        self.sta.connect(ssid, key)
+        self.sta_if.connect(ssid, key)
 
         start = time.ticks_ms()
-        while not self.sta.isconnected():
+        while not self.sta_if.isconnected():
             time.sleep(0.1)
             if start - time.ticks_ms() > 5000:
                 debug(f"Failed to connect to {ssid}")
                 return False
 
-        (self.ip, self.mask, self.gateway, self.dns) = self.sta.ifconfig()
+        (self.ip, self.mask, self.gateway, self.dns) = self.sta_if.ifconfig()
         debug("+------------------------------------------+")
         debug("   WiFi connected to:")
         debug(f"   SSID: {ssid} ")
@@ -90,14 +87,14 @@ class Wifi:
             for i in range(0, 14)]
         interference = [0] * 14
 
-        # if self.ap and self.ap.active():
-        #    self.ap.active(False)
+        # if self.ap_if and self.ap_if.active():
+        #    self.ap_if.active(False)
 
-        #if not self.sta or not self.sta.active():
-        self.sta = network.WLAN(network.STA_IF)
-        self.sta.active(True)
+        #if not self.sta_if or not self.sta_if.active():
+        self.sta_if = network.WLAN(network.STA_IF)
+        self.sta_if.active(True)
 
-        for (ssid, bssid, ch, db, authmode, hidden) in self.sta.scan():
+        for (ssid, bssid, ch, db, authmode, hidden) in self.sta_if.scan():
             debug(f"{ch} Station {ssid} found", DEBUG)
             if 1 > ch > 14: continue
             channel[ch]['ssid'] = ssid
@@ -143,7 +140,7 @@ class Wifi:
     async def start(self):
         debug("Starting network service")
         while True:
-            if not self.sta.isconnected():
+            if not self.sta_if.isconnected():
                 debug("Wifi connection failed. retrying")
                 self.connect(self, self.last_ssid, self.last_key)
             else:

@@ -44,9 +44,4 @@ test:
 
     print(station.ifconfig())
 
-### Install dependencies
-In REPL and type:
 
-    import upip
-    upip.install('micropython-pkg_resources')
-    upip.install('micropython-ulogging')

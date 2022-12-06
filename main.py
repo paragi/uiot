@@ -1,4 +1,5 @@
 import gc
+import time
 try:
     import uasyncio as asyncio
 except Exception as e:
@@ -62,24 +63,26 @@ async def start_services():
     print("All tasks have completed now.")
 
 
-# AP settings
-#ssid = config['access point']['ssid'].value  # 0 - 32-byte
-#key = config['access point']['key'].value  # 0-63 bytes
-# channel = config['access point']['channel']
-
-
-# if not wifi.ap(ssid=ssid, key=key,channel=channel):
-#    debug("Unable to establish network connection")
 
 # Wifi connect
 ssid = config['wifi']['ssid'].value  # 0 - 32-byte
 key = config['wifi']['key'].value  # 0-63 bytes
+# ssid = ''
 
-if not service.wifi.connect(ssid=ssid, key=key):
-    debug("Unable to establish network connection")
+if ssid and key :
+    if not service.wifi.connect(ssid=ssid, key=key):
+        debug("Unable to establish network connection")
+else:
+    # ssid = config['access point']['ssid'].value  # 0 - 32-byte
+    # key = config['access point']['key'].value  # 0-63 bytes
+    # channel = config['access point']['channel']
+    ssid = "CP-IOT"
+    key = b"piratekey"
+    channel = 13
+    if not service.wifi.ap(ssid=ssid, key=key,channel=channel):
+        debug("Unable to establish network connection")
 
-#host = config['webserver']['host ip'].value
-port = config['webserver']['port'].value
+
 
 routes = [
     ("/", service_webserver.dashboard_page),
