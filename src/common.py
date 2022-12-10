@@ -22,17 +22,18 @@ def debug(msg=None, msg_level=None, level=None):
     if msg and msg_level <= debug_level and debug_level > SILENT:
         print(level_str[msg_level] + ':', msg)
 
-class Services:
+class App:
     pass
 
-service = Services()
-
+global app
+app = App()
 def _cmd(cmd):
-    print(f"Command recieved: {cmd}")
+    print(f"Command recieved: {cmd} (Stub)")
     return 'ok'
-
-
-cmd = _cmd
+app.cmd = _cmd
+app.cmd_context = {}
+def register_context(context, handler):
+    app.cmd_context[context] = handler
 
 if __name__ == '__main__':
   pass

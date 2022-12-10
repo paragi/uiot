@@ -71,6 +71,29 @@ class Relay:
             self.relay[relay_no]['name'] = name
         return self.relay[relay_no]['name']
 
+    def handle(self, interaction, action):
+        k = -1
+        try:
+            k = int(interaction)
+        except:
+            for k, v in self.relay:
+                if interaction == v.name:
+                    break
+        if k >= 0:
+            if action:
+                if action.lower() in ('on', 'true', '1'):
+                    value = 1
+                else:
+                    value = 0
+                self.set(k, value)
+                return 'ok'
+            else:
+                return self.get(k)
+        return 'failed'
+
+relay = Relay(4)
+register_context('relay', relay.handle)
+
 
 if __name__ == '__main__':
     import time

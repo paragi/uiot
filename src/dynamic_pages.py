@@ -195,7 +195,7 @@ async def api_handler(request, writer):
     reply = 'Failed'
     if request.method() == "POST":
         if 'cmd' in request.body():
-            reply = cmd(request.body()['cmd'])
+            reply = app.cmd(request.body()['cmd'])
     debug(f"Reply: {reply}", DEBUG)
     writer.write(reply.encode('utf8'))
 

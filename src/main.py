@@ -129,10 +129,7 @@ async def web_page(request, writer):
   </html>\r\n\r\n"""
   await writer.awrite( (header.format(len(body)-1) + body).encode('ascii'))
 
-
-
 task = {}
-
 
 async def start_webserver_ap_wait_for_ip(lan):
   web_port = 8080 if platform == 'PC' else 80
@@ -194,5 +191,26 @@ async def start_services():
     gc.collect()
 
 
+def __cmd(cmd):
+  while True: # Run once
+    reply = 'failed'
+    debug(f"Command recieved: {cmd}")
+    if not cmd or not len(cmd):
+      break
+
+    assert(cmd)
+    context, sep, rest = cmd.partition(' ')
+    interaction, sep, action = rest.partition(' ')
+    debug(f"Interpretation: context: {context} interaction: {interaction} action: {action}")
+
+    if context in app.cmd_context:
+      reply = app.cmd_context[context](interaction, action)
+
+    break
+  return reply
+
+# Make cmd global
+app.cmd = __cmd
 debug(level=DEBUG)
+
 asyncio.run(start_services())
