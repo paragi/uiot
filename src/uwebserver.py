@@ -20,6 +20,7 @@ except:
 
     platform = 'PC'
 import gc
+import os
 
 try:
     from common import *

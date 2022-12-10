@@ -3,20 +3,19 @@ try:
     import network
     import usocket as socket
     import uasyncio as asyncio
-
     platform = 'ESP'
+
 except:
     import socket
     import asyncio
     import psutil
-
     platform = 'PC'
-import gc
-from common import *
-from config import *
-import relay
 
-relay = relay.Relay(4)
+import gc
+import os
+import json
+from common import *
+
 
 HEADER_OK = 'HTTP/1.x 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n'
 HEADER_NOT_FOUND = 'HTTP/1.x 404 Not Found\r\n\r\n'
@@ -104,39 +103,46 @@ async def page_handler(request, writer):
 
 async def dashboard_page(request, writer):
     writer.write(b'<table>\n')
-    for i in range(0, relay.relays):
-        writer.write(HTML['slider'].format(relay.name(i), f"relay {i}", '').encode('utf8'))
+    reply = cmd('relay all')
+    if reply and reply[0] == 'ok':
+        for line in reply[1:]:
+            if(len(line)):
+                relay = line.rpartition(' ')
+                writer.write(HTML['slider'].format(relay[0], f"relay {relay[0]}", relay[2]).encode('utf8'))
+    else:
+        writer.write("No relays configured")
     writer.write(b'</table>\n')
 
 
+# TODO: restart after facrtory reset
 async def setup_page(request, writer):
     global config
     writer.write(b'<table>\n')
-    for label in sorted(config.keys()):
+    for label in config.keys():
         header_done = False
-        for field in sorted(config[label].keys()):
+        for field in config[label].keys():
             if config[label][field].advanced: continue
             if not header_done:
                 writer.write(HTML['header'].format(label).encode('utf8'))
                 header_done = True
             if config[label][field].type == 'text':
                 writer.write(
-                    HTML['text'].format(field, 'config/%s %s' % (label, field), config[label][field].value).encode(
+                    HTML['text'].format(field, f"config {label}/{field}", config[label][field].value).encode(
                         'utf8'))
             if config[label][field].type == 'password':
                 writer.write(
-                    HTML['password'].format(field, 'config/%s %s' % (label, field), config[label][field].value).encode(
+                    HTML['password'].format(field, f"config {label}/{field}", config[label][field].value).encode(
                         'utf8'))
             elif config[label][field].type == 'checkbox':
-                writer.write(HTML['slider'].format(field, 'config/%s %s' % (label, field),
+                writer.write(HTML['slider'].format(field, f"config {label}/{field}",
                                                    'checked' if config[label][field].value == 'on' else '').encode(
                     'utf8'))
             elif config[label][field].type == 'slider':
-                writer.write(HTML['slider'].format(field, '%s-%s' % (label, field),
+                writer.write(HTML['slider'].format(f"config {label}/{field}",
                                                    'checked' if config[label][field].value == 'on' else '').encode(
                     'utf8'))
-    writer.write(HTML['button'].format('Save configuration', 'config data save').encode('utf8'))
-    writer.write(HTML['button'].format('Factory reset', 'config data reset').encode('utf8'))
+    writer.write(HTML['button'].format('Save configuration', 'config save').encode('utf8'))
+    writer.write(HTML['button'].format('Factory reset', 'config factory_reset').encode('utf8'))
     writer.write(b'</table>\n')
 
 
@@ -156,14 +162,9 @@ async def status_page(request, writer):
         content += add_row('Network interface settings', f'{cfg[0]}</br>{cfg[1]}</br>{cfg[2]}</br>{cfg[3]}')
     except Exception:
         pass
-    """
 
-            elif name == 'web access':
-                row += 'Web access:</td><td>Enabled''
-    """
     content += add_header('RAM')
     if platform == 'PC':
-        print(type(psutil.virtual_memory()))
         memory = psutil.virtual_memory()._asdict()
         free = memory['free']
         allocated = memory['used']
@@ -195,7 +196,7 @@ async def api_handler(request, writer):
     reply = 'Failed'
     if request.method() == "POST":
         if 'cmd' in request.body():
-            reply = cmd(request.body()['cmd'])
+            reply = app.cmd(request.body()['cmd'])
     debug(f"Reply: {reply}", DEBUG)
-    writer.write(reply.encode('utf8'))
+    writer.write(json.dumps(reply).encode('utf8'))
 
