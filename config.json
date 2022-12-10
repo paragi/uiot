@@ -1,1 +1,0 @@
-{"wifi": {"enable": "on", "ssid": "<SSID>", "key": "No shit"}, "security": {"configuration change enable": "on", "password": ""}, "webserver": {"document root": "/www", "host ip": "0.0.0.0", "port": 80}}
