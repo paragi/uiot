@@ -27,5 +27,12 @@ class Services:
 
 service = Services()
 
+def _cmd(cmd):
+    print(f"Command recieved: {cmd}")
+    return 'ok'
+
+
+cmd = _cmd
+
 if __name__ == '__main__':
   pass

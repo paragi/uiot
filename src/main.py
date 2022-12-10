@@ -1,4 +1,6 @@
-import time
+# Codinf Pirate micropython project
+# By Simon Rigét @ paragi 2022
+# Released under MIT licence
 
 try:
   import network
@@ -13,7 +15,9 @@ except:
 import gc
 
 from common import *
-import uweb
+import uwebserver
+import dynamic_pages
+
 
 
 DELAY_RESTART_AP_S = 5
@@ -103,7 +107,7 @@ class LAN:
       await asyncio.sleep(DELAY_RESTART_AP_S)
 
 
-async def web_page(request):
+async def web_page(request, writer):
   header = 'HTTP/1.x 200 OK\r\n'\
   'Content-Type: text/html; charset=UTF-8\r\n'\
   'Content-Length: {}\r\n'\
@@ -123,7 +127,9 @@ async def web_page(request):
   </form>
   </body>
   </html>\r\n\r\n"""
-  return header.format(len(body)-1) + body
+  await writer.awrite( (header.format(len(body)-1) + body).encode('ascii'))
+
+
 
 task = {}
 
@@ -135,8 +141,7 @@ async def start_webserver_ap_wait_for_ip(lan):
   while not lan.ap_ip:
     await asyncio.sleep(1)
 
-  webserver = uweb.Webserver(host=lan.ap_ip, port=web_port, dyn_handler=web_page, docroot='/www')
-  # webserver_sta = uweb.Webserver(host=lan.sta_ip, port=web_port,  docroot='www')
+  webserver = uwebserver.Webserver(host=lan.ap_ip, port=web_port, dyn_handler=dynamic_pages.page_handler, docroot='www')
   task = await webserver.start()
   debug("--------------------------------------------------")
   debug(f" Web server started for access point at http://{lan.ap_ip}:{web_port}")
@@ -150,8 +155,7 @@ async def start_webserver_sta_wait_for_ip(lan):
   while not lan.sta_ip:
     await asyncio.sleep(1)
 
-  webserver = uweb.Webserver(host=lan.sta_ip, port=web_port, dyn_handler=web_page, docroot='www')
-  # webserver_sta = uweb.Webserver(host=lan.sta_ip, port=web_port,  docroot='./www')
+  webserver = uwebserver.Webserver(host=lan.sta_ip, port=web_port, dyn_handler=dynamic_pages.page_handler, docroot='www')
   task = await webserver.start()
   debug("--------------------------------------------------")
   debug(f" Web server started for WiFi client at http://{lan.sta_ip}:{web_port}")

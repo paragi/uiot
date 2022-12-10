@@ -2,6 +2,12 @@
 # (c) Simon Rigét @ paragi 2022
 # Released under MIT licence
 
+# captive portal:
+# https://github.com/anson-vandoren/esp8266-captive-portal
+# https://lemariva.com/blog/2019/01/white-hacking-wemos-captive-portal-using-micropython
+
+
+
 try:
     import network
     import usocket as socket
@@ -13,10 +19,13 @@ except:
     import asyncio
 
     platform = 'PC'
+import gc
+
 try:
     from common import *
 except:
     debug = print
+
 
 MAX_LEN_RECIEVE = 1024
 READ_TIMEOUT_MS = 1000
@@ -89,7 +98,7 @@ class Request:
                 if 'Content-Type' in self.headers().keys():
                     encoding = self.headers()['Content-Type']
                 if not encoding or encoding == 'application/x-www-form-urlencoded':
-                    for line in self._body_raw.decode('utf8').split('\r\n'):
+                    for line in self._body_raw.split('\r\n'):
                         (key, value) = line.split('=', 1)
                         self._body[key] = value
                 elif encoding == 'application/json':
@@ -99,14 +108,6 @@ class Request:
 
 
 class Webserver():
-    async def hello_dyn_handler(self, request):
-        return 'HTTP/1.x 200 OK\r\n' \
-               'Content-Type: text/html; charset=UTF-8\r\n' \
-               '\r\n' \
-               '<!DOCTYPE html><html>\n' \
-               '<body><h1>Welcome to CP-IOT webserver</h1></body>' \
-               '</html>'
-
     def __init__(self, host='0.0.0.0', port=80, docroot='', dyn_handler=None):
         self.host = host
         self.port = port
@@ -115,6 +116,15 @@ class Webserver():
             self.dyn_handler = dyn_handler
         else:
             self.dyn_handler = self.hello_dyn_handler
+
+    async def hello_dyn_handler(self, request, writer):
+        await writer.awrite('HTTP/1.x 200 OK\r\n' \
+               'Content-Type: text/html; charset=UTF-8\r\n' \
+               '\r\n' \
+               '<!DOCTYPE html><html>\n' \
+               '<body><h1>Welcome to CP-IOT webserver</h1></body>' \
+               '</html>'
+        .encode('utf8'))
 
     async def handle_client(self, reader, writer):
         while True:  # Run once
@@ -133,16 +143,11 @@ class Webserver():
             # Serve static file
             ext = request.path().rpartition('.')[2]
             if ext in MIMETYPE.keys():
-                file_name = self.docroot + request.path()
-                debug(f"Request file: {file_name}")
-                if os.path.exists(file_name):
-                    try:
-                        minetype = MIMETYPE[ext];
-                    except:
-                        minetype = MIMETYPE['html']
-                    writer.write(STATIC_FILE_HEADER.format(minetype).encode('utf-8'))
+                debug(f"Request file: {request.path()}")
+                if request.path()[1:] in os.listdir(self.docroot):
+                    writer.write(STATIC_FILE_HEADER.format(MIMETYPE[ext]).encode('utf-8'))
                     await writer.drain()
-                    with open(file_name, 'rb') as file_handle:
+                    with open(self.docroot + request.path(), 'rb') as file_handle:
                         while chunck := file_handle.read(SEND_BUFFER_SIZE):
                             writer.write(chunck)
                 else:
@@ -168,14 +173,13 @@ class Webserver():
 
                 debug("Sending response")
                 if self.dyn_handler:
-                    response = await self.dyn_handler(request)
-                writer.write(response.encode('utf8'))
+                    await self.dyn_handler(request, writer)
 
             await writer.drain()
             break
         writer.close()
         # if platform != 'PC': await writer.closed()
-        return
+        gc.collect()
 
     async def start(self):
         self.server = await asyncio.start_server(self.handle_client, self.host, self.port)
