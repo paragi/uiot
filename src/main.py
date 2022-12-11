@@ -16,7 +16,7 @@ import gc
 
 
 from common import *
-debug(level=WARNING)
+debug(level=DEBUG)
 
 import uwebserver
 import dynamic_pages

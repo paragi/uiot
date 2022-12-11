@@ -25,7 +25,7 @@ except Exception as e:
 class Relay:
     def __init__(self, relays):
         self.relays = relays
-        self.inverse = True
+        self.inverse = 1
         #     Pin, name
         self.relay = [
             {'pin': 23, 'name': "Relæ-1", 'function': None},
@@ -60,7 +60,7 @@ class Relay:
         else:
             value = -1
         debug('Get {}({}) at pin {}: {}'.format(self.relay[relay_no]['name'], relay_no, self.relay[relay_no]['pin'], value), INFO)
-        return value ^ self.inverse
+        return value
 
     def name(self, relay_no, name=None):
         if name:

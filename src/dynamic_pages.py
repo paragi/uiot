@@ -108,7 +108,8 @@ async def dashboard_page(request, writer):
         for line in reply[1:]:
             if(len(line)):
                 relay = line.rpartition(' ')
-                writer.write(HTML['slider'].format(relay[0], f"relay {relay[0]}", relay[2]).encode('utf8'))
+                checked = 'checked' if relay[2] == 'on' else ''
+                writer.write(HTML['slider'].format(relay[0], f"relay {relay[0]}", checked).encode('utf8'))
     else:
         writer.write("No relays configured")
     writer.write(b'</table>\n')
