@@ -6,8 +6,6 @@
 # https://github.com/anson-vandoren/esp8266-captive-portal
 # https://lemariva.com/blog/2019/01/white-hacking-wemos-captive-portal-using-micropython
 
-
-
 try:
     import network
     import usocket as socket

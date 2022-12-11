@@ -10,7 +10,6 @@ INFO = 3
 DEBUG = 4
 debug_level = INFO
 
-
 class App:
     def __init__(self):
         import command # Import locally to avoid circular references

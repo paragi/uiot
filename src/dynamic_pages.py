@@ -188,8 +188,6 @@ async def status_page(request, writer):
     writer.write(content.encode('utf8'))
 
 
-# Use pyhtml ?
-# Nor really implementet yet :)
 async def api_handler(request, writer):
     global service
     debug(f'API request :{request.path()}')

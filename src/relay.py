@@ -113,6 +113,3 @@ if __name__ == '__main__':
         for i in range(0, relay.relays):
             relay.set(i, not relay.get(i))
             time.sleep(0.3)
-
-
-            

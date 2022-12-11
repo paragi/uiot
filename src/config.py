@@ -110,5 +110,3 @@ class ConfigClass:
                     reply = ['ok']
                     reply.append(self.config[group][field].value)
         return reply
-
-
