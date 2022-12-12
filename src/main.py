@@ -99,14 +99,15 @@ class LAN:
           self.client_ip = self.client_if.ifconfig()[0]
       else:
         if on_line:
-          debug(f"Lost connection to Wifi {self.client_ssid}")
+          debug(f"Lost connection to Wifi {self.client_ssid}", WARNING)
           on_line = False
 
         debug(f"Try connecting to WiFi {self.client_ssid} with {self.client_key}")
         self.client_if.active(True)
         try:
           self.client_if.connect(self.client_ssid, self.client_key)
-        except: pass
+        except Exception as e:
+          debug(f"Failed with error: {e}", WARNING)
 
       await asyncio.sleep(DELAY_RESTART_AP_S)
 
