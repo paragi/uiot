@@ -1,15 +1,17 @@
 # Dynamic page handlers
+PC = 1
+ESP = 2
 try:
     import network
     import usocket as socket
     import uasyncio as asyncio
-    platform = 'ESP'
+    platform = ESP
 
 except:
     import socket
     import asyncio
     import psutil
-    platform = 'PC'
+    platform = PC
 
 import gc
 import os
@@ -94,6 +96,8 @@ async def page_handler(request, writer):
         menu += HTML['nav_item'].format('_active' if route == title else '', title, title[:1].upper() + title[1:])
     writer.write(HTML_DOCUMENT_BEGIN.format(unical_route, HTML['navigation'].format(menu)).encode('utf8'))
 
+    debug(f'Dynamic page request :{request.path()}')
+
     if route == 'dashboard':  await dashboard_page(request, writer)
     if route == 'status':      await status_page(request, writer)
     if route == 'setup':      await setup_page(request, writer)
@@ -165,7 +169,7 @@ async def status_page(request, writer):
         pass
 
     content += add_header('RAM')
-    if platform == 'PC':
+    if platform == PC:
         memory = psutil.virtual_memory()._asdict()
         free = memory['free']
         allocated = memory['used']

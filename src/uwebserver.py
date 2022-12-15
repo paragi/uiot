@@ -5,18 +5,19 @@
 # captive portal:
 # https://github.com/anson-vandoren/esp8266-captive-portal
 # https://lemariva.com/blog/2019/01/white-hacking-wemos-captive-portal-using-micropython
-
+PC = 1
+ESP = 2
 try:
     import network
     import usocket as socket
     import uasyncio as asyncio
 
-    platform = 'ESP'
+    platform = ESP
 except:
     import socket
     import asyncio
 
-    platform = 'PC'
+    platform = PC
 import gc
 import os
 
@@ -25,7 +26,7 @@ try:
 except:
     debug = print
 
-
+# TODO: redirect https -> http af hensyn til store browsere
 MAX_LEN_RECIEVE = 1024
 READ_TIMEOUT_MS = 1000
 SEND_BUFFER_SIZE = 128
@@ -107,7 +108,7 @@ class Request:
 
 
 class Webserver():
-    def __init__(self, host='0.0.0.0', port=80, docroot='', dyn_handler=None):
+    def __init__(self, host='0.0.0.0', port=80, dyn_handler=None, docroot=''):
         self.host = host
         self.port = port
         self.docroot = docroot
@@ -177,7 +178,7 @@ class Webserver():
             await writer.drain()
             break
         writer.close()
-        # if platform != 'PC': await writer.closed()
+        # if platform != PC: await writer.closed()
         gc.collect()
 
     async def start(self):
