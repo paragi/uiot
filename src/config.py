@@ -28,10 +28,9 @@ class Constraint:
         if isinstance(element, (list, tuple, range, dict)):
             return '0'
         if isinstance(element, str):
-
             return element[0:length if length >= 0 else len(element)]
         else:
-            return str(element, 'utf8')[0:length]
+            return str(element)[0:length if length >= 0 else len(str(element))]
 
     def type_int(element, min=None, max=None):
         i = int(element)

@@ -216,8 +216,7 @@ async def start():
     config.add('webserver', 'client port', 'int', 80, 'Webserver port (Default 80 on ESP, 8080 on PC)', True)
     config.add('webserver', 'document root', 'text', '/www', 'Webservers document root (Default to current directory)',
                True)
-    config.add('webserver', 'access point port', 'int', 80,
-               'Webserver port for access point (Default 80 on ESP, 8080 on PC)', True)
+    config.add('webserver', 'access point port', 'int', 80,'Webserver port for access point (Default 80 on ESP, 8080 on PC)', True)
 
     if not app.wifi:
         debug(f"Wifi module not loaded before {__file__}. Webservers not started.")
@@ -250,6 +249,7 @@ async def start():
         if platform == PC and port < 1024:
             port = 8080
             docroot = '.' + docroot
+
 
         webserver = uwebserver.Webserver(
             host=app.wifi.ip['client'],
