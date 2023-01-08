@@ -226,11 +226,11 @@ async def start():
 
     if app.wifi.mode != app.wifi.MODE_CLIENT:
         debug(f"Starting webserver for access point")
-        while not app.wifi.ip['access point']:
+        while not app.wifi.ip['access_point']:
             await asyncio.sleep(0.3)
 
         webserver = uwebserver.Webserver(
-            host=app.wifi.ip['access point'],
+            host=app.wifi.ip['access_point'],
             port=config['webserver']['access point port'].value,
             dyn_handler=page_handler,
             docroot=config['webserver']['document root'].value
@@ -238,7 +238,7 @@ async def start():
         app.task['webserver access point'] = asyncio.create_task(webserver.start())
         debug("--------------------------------------------------")
         debug(
-            f" Web server started for access point at http://{app.wifi.ip['access point']}:{config['webserver']['access point port'].value}")
+            f" Web server started for access point at http://{app.wifi.ip['access_point']}:{config['webserver']['access point port'].value}")
         debug("--------------------------------------------------")
 
     if app.wifi.mode != app.wifi.MODE_AP:
