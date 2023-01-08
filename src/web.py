@@ -1,3 +1,6 @@
+# Common elements to the CP-IOT project
+# By Simon Rigét 2022
+# Released under MIT license
 # Dynamic page handlers
 PC = 1
 ESP = 2
@@ -5,19 +8,23 @@ try:
     import network
     import usocket as socket
     import uasyncio as asyncio
+
     platform = ESP
 
 except:
     import socket
     import asyncio
     import psutil
+
     platform = PC
 
 import gc
 import os
 import json
-from common import *
 
+import uwebserver
+
+from common import *
 
 HEADER_OK = 'HTTP/1.x 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n'
 HEADER_NOT_FOUND = 'HTTP/1.x 404 Not Found\r\n\r\n'
@@ -98,9 +105,9 @@ async def page_handler(request, writer):
 
     debug(f'Dynamic page request :{request.path()}')
 
-    if route == 'dashboard':  await dashboard_page(request, writer)
-    if route == 'status':      await status_page(request, writer)
-    if route == 'setup':      await setup_page(request, writer)
+    if route == 'dashboard': await dashboard_page(request, writer)
+    if route == 'status':    await status_page(request, writer)
+    if route == 'setup':     await setup_page(request, writer)
 
     writer.write(HTML['end'].encode('utf8'))
 
@@ -110,7 +117,7 @@ async def dashboard_page(request, writer):
     reply = cmd('relay all')
     if reply and reply[0] == 'ok':
         for line in reply[1:]:
-            if(len(line)):
+            if (len(line)):
                 relay = line.rpartition(' ')
                 checked = 'checked' if relay[2] == 'on' else ''
                 writer.write(HTML['slider'].format(relay[0], f"relay {relay[0]}", checked).encode('utf8'))
@@ -126,7 +133,8 @@ async def setup_page(request, writer):
     for label in config.keys():
         header_done = False
         for field in config[label].keys():
-            if config[label][field].advanced: continue
+            if config[label][field].advanced:
+                continue
             if not header_done:
                 writer.write(HTML['header'].format(label).encode('utf8'))
                 header_done = True
@@ -203,3 +211,58 @@ async def api_handler(request, writer):
     debug(f"Reply: {reply}", DEBUG)
     writer.write(json.dumps(reply).encode('utf8'))
 
+
+async def start():
+    config.add('webserver', 'client port', 'int', 80, 'Webserver port (Default 80 on ESP, 8080 on PC)', True)
+    config.add('webserver', 'document root', 'text', '/www', 'Webservers document root (Default to current directory)',
+               True)
+    config.add('webserver', 'access point port', 'int', 80,
+               'Webserver port for access point (Default 80 on ESP, 8080 on PC)', True)
+
+    if not app.wifi:
+        debug(f"Wifi module not loaded before {__file__}. Webservers not started.")
+        return
+
+    if app.wifi.mode != app.wifi.MODE_CLIENT:
+        debug(f"Starting webserver for access point")
+        while not app.wifi.ip['access point']:
+            await asyncio.sleep(0.3)
+
+        webserver = uwebserver.Webserver(
+            host=app.wifi.ip['access point'],
+            port=config['webserver']['access point port'].value,
+            dyn_handler=page_handler,
+            docroot=config['webserver']['document root'].value
+        )
+        app.task['webserver access point'] = asyncio.create_task(webserver.start())
+        debug("--------------------------------------------------")
+        debug(
+            f" Web server started for access point at http://{app.wifi.ip['access point']}:{config['webserver']['access point port'].value}")
+        debug("--------------------------------------------------")
+
+    if app.wifi.mode != app.wifi.MODE_AP:
+        debug(f"Starting webserver (for LAN client)")
+        while not app.wifi.ip['client']:
+            await asyncio.sleep(0.3)
+
+        port = config['webserver']['client port'].value
+        docroot = config['webserver']['document root'].value
+        if platform == PC and port < 1024:
+            port = 8080
+            docroot = '.' + docroot
+
+        webserver = uwebserver.Webserver(
+            host=app.wifi.ip['client'],
+            port=port,
+            dyn_handler=page_handler,
+            docroot=docroot
+        )
+        app.task['webserver'] = asyncio.create_task(webserver.start())
+        debug("--------------------------------------------------")
+        debug(f" Web server started for WiFi client at http://{app.wifi.ip['client']}:{port}")
+        debug("--------------------------------------------------")
+    return task
+
+
+if 'webserver' not in app.task:
+    app.task['webserver'] = asyncio.create_task(start())

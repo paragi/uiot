@@ -1,5 +1,10 @@
+# Common elements to the CP-IOT project
+# By Simon Rigét 2022
+# Released under MIT license
 import json
 import os
+from collections import OrderedDict
+
 from common import *
 
 
@@ -11,80 +16,84 @@ class ConfigElement:
         self.hint = hint if hint else ""
 
 
-class ConfigClass:
+# Numeric data types: int, float, complex
+# String data types: str
+# Sequence types: list, tuple, range
+# Binary types: bytes, bytearray, memoryview
+# Mapping data type: dict
+# Boolean type: bool
+# Set data types: set, frozenset
+class Constraint:
+    def type_text(element, length=-1):
+        if isinstance(element, (list, tuple, range, dict)):
+            return '0'
+        if isinstance(element, str):
+
+            return element[0:length if length >= 0 else len(element)]
+        else:
+            return str(element, 'utf8')[0:length]
+
+    def type_int(element, min=None, max=None):
+        i = int(element)
+        if min:
+            i = max(i, min)
+        if max:
+            i = min(i, min)
+        return i
+
+    def type_array(element):
+        if isinstance(element, (list, tuple, range, dict)):
+            return element
+        if isinstance(element, (int, float, complex)):
+            return [element]
+        else:
+            return [Constraint.type_text(element)]
+
+    fit = {'text': type_text, 'password': type_text, 'int': type_int, 'array': type_array}
+
+# Currently (2023) Micropython has issues with deriving subclass from a built in type.
+# This class therefore use a variable to store the dict rather than self.
+class Configure():
+    class Setting(dict):
+        def add(self, group, name, type='text', default='', hint='', advanced=False):
+            debug(f"adding configuration:  {group}, {name}, {type}, {default}, {hint}, DEBUG)")
+            # test constrains
+            if group not in self:
+                self[group] = {}
+            if name in self[group] and self[group][name].value:
+                value = self[group][name].value
+            else:
+                value = Constraint.fit[type](default)
+            self[group][name] = ConfigElement(value, type, hint, advanced)
+
     def __init__(self):
-        self.preset()
+        self.setting = Configure.Setting()
         self.retrieve()
 
-    def preset(self):
-        self.config = {
-            'wifi': {
-                # 'enable': ConfigElement('on', 'checkbox', "Enable: connect to existing WiFi. Disable to activate accespoint method"),
-                'ssid': ConfigElement('', 'text', 'ID for access point/router (0 - 32 characters)'),
-                'key': ConfigElement('', 'password', 'Authorisation key to gain access (0 - 63 characters)'),
-            },
-        }
-        '''
-            'access point':{
-                'ssid': ConfigElement('CP-IOT', 'text', '', True),
-                'key': ConfigElement('piratekey', 'password', '', True),
-                'channel': ConfigElement('13', 'integer', '', True),
-            },
-            'security': {
-                'configuration_change_enable': ConfigElement('off', 'checkbox', 'Enable simple password authentication for web access'),
-                'password': ConfigElement('', 'password'),
-            },
-            'webserver': {
-                'document_root': ConfigElement('/www', 'text', '', True),
-                'host_ip': ConfigElement('0.0.0.0', 'text', '', True),
-                'port': ConfigElement(80, 'integer', '', True),
-            },
-            'relay-1': {
-                'name': ConfigElement('Relay-1', 'text', '', True),
-                'pin': ConfigElement('22', 'text', '', True),
-            },
-            'relay-2': {
-                'name': ConfigElement('Relay-2', 'text', '', True),
-                'pin': ConfigElement('22', 'text', '', True),
-            },
-            'relay-3': {
-                'name': ConfigElement('Relay-3', 'text', '', True),
-                'pin': ConfigElement('22', 'text','', True),
-            },
-            'relay-4': {
-                'name': ConfigElement('Relay-4', 'text', '', True),
-                'pin': ConfigElement('22', 'text', '', True),
-            },
-        }
-        '''
-
     def retrieve(self):
-        try:
+        if 'config.json' in os.listdir():
             with open('config.json', 'r', encoding='utf-8') as f:
                 array = json.loads(f.read())
                 debug(f"Reading configuration: {array}", DEBUG)
                 for group in array:
                     for field in array[group]:
-                        self.config[group][field].value = array[group][field]
+                        self.setting.add(group, field, default=array[group][field])
                 f.close()
-        except Exception as e:
-            debug(f"Failed to read configuration: {e}", DEBUG)
-            # self.store()
 
     def store(self):
         array = {}
         with open('config.json', 'w', encoding='utf-8') as f:
-            for group in self.config:
+            for group in self.setting:
                 array[group] = {}
-                for field in self.config[group]:
-                    array[group][field] = self.config[group][field].value
+                for field in self.setting[group]:
+                    array[group][field] = self.setting[group][field].value
             debug("Storing configuration: {}".format(array))
             json.dump(array, f)
             f.close()
 
     def factory_preset(self):
         debug("Deleting stored configuration")
-        self.preset()
+        app.__init__()
         return os.remove('config.json')
 
     def handle_cmd(self, interaction, action):
@@ -97,16 +106,16 @@ class ConfigClass:
             reply = ['ok']
         elif interaction == 'all':
             reply = ['ok']
-            for group in self.config:
-                for field in self.config[group]:
-                    reply.append(f"{group} {field}={self.config[group][field].value}")
+            for group in self.setting:
+                for field in self.setting[group]:
+                    reply.append(f"{group} {field}={self.setting[group][field].value}")
         else:
             group, sep, field = interaction.partition('/')
             if len(group) and len(field):
                 if action:
-                    self.config[group][field].value = action
+                    self.setting[group][field].value = action
                     reply = ['ok']
                 else:
                     reply = ['ok']
-                    reply.append(self.config[group][field].value)
+                    reply.append(self.setting[group][field].value)
         return reply
