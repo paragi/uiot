@@ -110,6 +110,7 @@ async def page_handler(request, writer):
     if route == 'setup':     await setup_page(request, writer)
 
     writer.write(HTML['end'].encode('utf8'))
+    gc.collect()
 
 
 async def dashboard_page(request, writer):
@@ -210,6 +211,7 @@ async def api_handler(request, writer):
             reply = app.cmd(request.body()['cmd'])
     debug(f"Reply: {reply}", DEBUG)
     writer.write(json.dumps(reply).encode('utf8'))
+    gc.collect()
 
 
 async def start():
@@ -261,6 +263,7 @@ async def start():
         debug("--------------------------------------------------")
         debug(f" Web server started for WiFi client at http://{app.wifi.ip['client']}:{port}")
         debug("--------------------------------------------------")
+    gc.collect()
     return task
 
 

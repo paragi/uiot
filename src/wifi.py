@@ -57,9 +57,9 @@ class Wifi:
     config.add('wifi', 'dns', 'text', '', 'DNS (Name server) IP address (Ignoring DHCP from router)'), True
     config.add('wifi', 'link_up_ip', 'text', '', 'IP address of server to ping for link-up test (Default gateway)', True)
     config.add('wifi', 'link_up_port', 'text', '', 'port to ping for link-up test (Default 80)', True)
-    config.add('wifi', 'retry_connect_every_s', 'text', '', 'Time between retry connecting to wifi', True)
-    config.add('wifi', 'connect_timeout_s', 'text', '', 'Timeout for connecting to wifi', True)
-    config.add('wifi', 'read_timeout_s', 'text', '', 'Timeout for socket reading (from clinet) in milli seconds', True)
+    config.add('wifi', 'retry_connect_every_s', 'int', 30, 'Time between retry connecting to wifi', True)
+    config.add('wifi', 'connect_timeout_s', 'int', 5, 'Timeout for connecting to wifi', True)
+    config.add('wifi', 'read_timeout_s', 'int', 1, 'Timeout for socket reading (from clinet) in milli seconds', True)
     config.add('access point', 'ssid', 'text', 'CP_IOT', 'Network name for this device in access point modeo', False)
     config.add('access point', 'key', 'password', 'piratekey', 'Passphrase to connect to device ', False)
     selection = ['auto'] + [i for i in range(1,15)]

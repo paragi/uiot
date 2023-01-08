@@ -53,7 +53,7 @@ class Constraint:
 # Currently (2023) Micropython has issues with deriving subclass from a built in type.
 # This class therefore use a variable to store the dict rather than self.
 class Configure():
-    class Setting(dict):
+    class Setting(OrderedDict):
         def add(self, group, name, type='text', default='', hint='', advanced=False):
             debug(f"adding configuration:  {group}, {name}, {type}, {default}, {hint}, DEBUG)")
             # test constrains
