@@ -51,7 +51,7 @@ class Wifi:
     config.add('wifi', 'ssid', 'text', '', 'ID for access point/router (0 - 32 characters)', False)
     config.add('wifi', 'key', 'password', '', 'ID for access point/router (0 - 32 characters letters and numbers)', False)
     selection = ('Client only', 'Access point only', 'Both', 'Fallback to AP')
-    config.add('wifi', 'mode', 'text', selection, 'ID for access point/router (0 - 32 characters letters and numbers)')
+    config.add('wifi', 'mode', 'array', selection, 2, 'ID for access point/router (0 - 32 characters letters and numbers)')
     config.add('wifi', 'ip', 'text', '', 'Static IP address (Ignoring DHCP from router)')
     config.add('wifi', 'gateway', 'text', '', 'Gateway IP address (Ignoring DHCP from router)', True)
     config.add('wifi', 'dns', 'text', '', 'DNS (Name server) IP address (Ignoring DHCP from router)'), True
@@ -63,7 +63,7 @@ class Wifi:
     config.add('access_point', 'ssid', 'text', 'CP_IOT', 'Network name for this device in access point modeo', False)
     config.add('access_point', 'key', 'password', 'piratekey', 'Passphrase to connect to device ', False)
     selection = ['auto'] + [i for i in range(1,15)]
-    config.add('access_point', 'channel', 'text', selection, 'Wifi channel (Default auto select)', True)
+    config.add('access_point', 'channel', 'array', selection, 'Wifi channel (Default auto select)', True)
     config.add('access_point', 'ip', 'text', '', 'P address', True)
     if platform != PC:
       self.nic = network.WLAN(network.STA_IF)
@@ -240,7 +240,7 @@ class Wifi:
       await asyncio.sleep(RETRY_CONNECT_EVERY_S)
 
       if self.mode != self.MODE_AP and self.link_up:
-        print("Testinbg link")
+        print("Testing link")
         self.link_up = await self.is_link_up()
         gc.collect()
 

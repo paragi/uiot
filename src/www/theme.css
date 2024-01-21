@@ -6,6 +6,10 @@
     --light1: #fff;
     --light2: #bbb;
     --light3: #999;
+    --on: #0c0;
+    --off: #c00;
+    --color1: #00eeff;
+    --color-dark: #004455;
     /* font-size: 2vw;
     */
 }
@@ -22,13 +26,14 @@ body {
     position: relative;
     min-height: 100%;
     color: var(--light1);
+  text-align: center;
 }
 .logo {
   position: absolute;
   left: 3px;
   top: 3px;
   padding: 3px;
-  height: 90px;
+  height: 60px;
   /*background: linear-gradient(to left, var(--light) 0%, var(--light2) 100%);
   */
   background: #777;
@@ -43,26 +48,8 @@ body {
     top: 0;
     width: 100%;
     height: 80px;
-    box-shadow: 0px 0px 14px 2px rgba(0, 0, 0, 0.75);
+    box-shadow: 0px 0px 14px 2px var(--color1);
 }
-
-#footer {
-    background: var(--dark2);
-    color: var(--light);
-    border-top: 6px solid #1d1a18;
-    box-shadow: 0px 0px 14px 2px rgba(0, 0, 0, 0.75);
-    text-align: center;
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    height: 20px;
-    font-family: "Helvetica";
-    font-size: 14px;
-    color: var(--light);
-    font-weight: 600;
-}
-
 #heading {
     font-family: "Arial";
     font-size: 36px;
@@ -71,12 +58,83 @@ body {
     margin-top: 10px;
     color: var(--light1);
 }
+.header-right{
+  position: absolute;
+  right: 30px;
+  top: 30px;
+}
+.main {
+  position: fixed;
+  left: 0;
+  top: 100px;
+  width: 100%;
+}
+footer {
+    text-align: center;
+    font-size: 14px;
+    color: var(--color1);
+    font-weight: 600;
+}
+footer a:link, footer a:visited, footer a:hover, footer a:active {
+  color: var(--color1);
+  text-decoration: none;
+}
+
+.tabs {
+  display: inline-block;
+  padding: 5px;
+  background: var(--dark1);
+  padding: 10px;
+  text-align: left;
+}
+
+.tab {
+
+}
+
+.tab label {
+  background: var(--dark3);
+  color: var(--light);
+  border-radius: 10px 10px 0px 0px;
+  padding: 7px;
+  cursor: pointer;
+}
+
+.tab label:hover {
+  padding: 14px;
+  border-radius: 14px 14px 0px 0px;
+  transition: all 0.25s;
+}
+
+.tab [type=radio] {
+  display: none;
+}
+
+[type=radio]:checked ~ label {
+  background: var(--color-dark);
+}
+
+.content {
+  display: none;
+  background: var(--dark2);
+  border-radius: 0px 10px 10px 10px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 10px;
+  transition: all .3s;
+  width: 100%;
+}
+.content td{
+  padding: 7px;
+}
+.advanced{
+    display: none;
+}
 
 .navigation {
     margin-bottom: 20px;
     color: var(--light1);
 }
-
 .navigationlink {
     text-decoration: none;
     font-weight: 800;
@@ -85,11 +143,9 @@ body {
     border-bottom-color: var(--light1);
     padding: 5px;
 }
-
 .navigationlink:hover {
     background: var(--medium);
 }
-
 .navigationlink_active {
    text-decoration: none;
    font-weight: 800;
@@ -102,46 +158,46 @@ body {
     border-bottom-color: var(--light2);
 }
 
-main {
-    padding-top: 115px;
-    padding-bottom: 2%;
-    height: 100%;
-}
-
-table{
-  margin-bottom: 10px;
-  margin-left: auto;
-  margin-right: auto;
-  border-collapse: separate;
-  border-radius: 10px;
-  border: 1px solid black;
-  background: var(--dark2);
-  padding: 5px;
-}
-
 td{
   color: var(--light);
-  vertical-align: middel;
 }
 
-input{
-   background: var(--dark);
+input, select, button{
+   background-color: var(--color-dark);
    color: var(--light);
    border:2px inset var(--dark2);
 }
 
-.button{
-   background: var(--light2);
-   color: var(--dark) !important;
-   border:5px outset var(--light3);
+button{ /* Not used */
+   background-color: var(--color-dark);
+   border:2px outset var(--light3);
+   border-radius: 10px;
+   min-width: 20px;
+   min-height: 20px;
 }
-
-.button:hover{
-   background: var(--light1);
+.button{
+   display: inline-block;
+   background-color: var(--color-dark); /*Fallback if gradients don't work */
+   background: radial-gradient(var(--color-dark)40%, var(--color1));
+   border:2px outset var(--light3);
+   border-radius: 10px;
+   width: 20px;
+   height: 20px;
+}
+.button_label, .button_label td{
+   border: 10px;
+   border-width: 10px;
+   margin: 0;
+}
+.button_label:hover{
+   background-color: var(--dark3);
+}
+.button_label:hover .button{
+   background-color: var(--color); /*Fallback if gradients don't work */
+   background: radial-gradient(var(--color-dark)10%, var(--color1));
 }
 
 /* LED like checkbox
-*/
 input[type="checkbox"]{
   width: 20px; height: 20px;
   border-radius: 50%;
@@ -153,24 +209,20 @@ input[type="checkbox"]{
  }
 
 input:checked{ box-shadow: inset 0 0 0 20px #0b0; }
-
+*/
 /* Slider switch checkbox
 */
-
 .slider_l {
   position: relative;
   display: inline-block;
   width: 46px;
   height: 25px;
-
 }
-
-.slider_l input {
+.slider_l input, free-slider-input {
   opacity: 0;
   width: 0;
   height: 0;
 }
-
 .slider {
   position: absolute;
   cursor: pointer;
@@ -178,12 +230,11 @@ input:checked{ box-shadow: inset 0 0 0 20px #0b0; }
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #c00;
+  background-color: var(--off);
   -webkit-transition: .4s;
   transition: .4s;
   border-radius: 34px;
 }
-
 .slider:before {
   position: absolute;
   content: "";
@@ -196,18 +247,149 @@ input:checked{ box-shadow: inset 0 0 0 20px #0b0; }
   transition: .4s;
   border-radius: 50%
 }
-
 input:checked + .slider {
-  background-color: #0c0;
+  background-color: var(--on);
 }
-
 input:focus + .slider {
   box-shadow: 0 0 1px #cc0;
 }
-
 input:checked + .slider:before {
   -webkit-transform: translateX(21px);
   -ms-transform: translateX(21px);
   transform: translateX(21px);
 }
 
+
+
+.glow-on-hover {
+    border: none;
+    outline: none;
+    background: var(--dark2);
+    cursor: pointer;
+    position: relative;
+    z-index: 0;
+    border-radius: 10px;
+}
+
+.glow-on-hover:before {
+    content: '';
+    background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
+    position: absolute;
+    top: -2px;
+    left:-2px;
+    background-size: 400%;
+    z-index: -1;
+    filter: blur(5px);
+    width: calc(100% + 4px);
+    height: calc(100% + 4px);
+    animation: glowing 20s linear infinite;
+    opacity: 0;
+    transition: opacity .3s ease-in-out;
+    border-radius: 10px;
+}
+
+.glow-on-hover:active {
+    color: var(--dark2);
+}
+
+.glow-on-hover:active:after {
+    background: transparent;
+}
+
+.glow-on-hover:hover:before {
+    opacity: 1;
+}
+
+.glow-on-hover:after {
+    z-index: -1;
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: var(--dark2);
+    left: 0;
+    top: 0;
+    border-radius: 10px;
+}
+
+@keyframes glowing {
+    0% { background-position: 0 0; }
+    50% { background-position: 400% 0; }
+    100% { background-position: 0 0; }
+}
+/*
+.console{
+  position: relative;
+  width: 400px;
+  height: 300px;
+  margin: auto;
+	border: 1px solid yellow;
+	padding:13px;
+	border-radius: 50px;
+	  text-align: left;
+  box-shadow: inset 0px 0px var(--module-shadow) rgba(0,0,0,1);
+	background: radial-gradient(#790,#570,#000);
+  overflow: hidden;
+  background-size:100% 100%;
+  box-sizing: border-box;
+  transition: opacity 1s ease-in-out;
+  font-family: Inconsolata, monospace;
+  font-weight: 600;
+  color: #dd6;
+  overflow-wrap: break-word;
+}
+*/
+.console{
+    background: var(--color-dark);
+    color: var(--light)
+    text-align: left;
+    font-family: Inconsolata, monospace;
+    font-weight: 600;
+    color: #dd6;
+    overflow: hidden;
+    overflow-wrap: break-word;
+    height: 600px;
+}
+
+.console-input, .console-input textarea{
+    display: flex;
+    outline: none;
+    border: 0;
+    background-color:rgba(0,0,0,0);
+    color: var(--light);
+    font-family: Inconsolata, monospace;
+    font-weight: 600;
+}
+console-input textarea{
+    overflow-wrap: break-word;
+}
+
+.console-output{
+    width:100%;
+    height: 75%;
+    max-height: 75%;
+    top:0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    outline: none;
+    border:0px;
+    overflow: hidden;
+    overflow-y: scroll;
+    white-space: pre-wrap;
+    color: #aa0;
+}
+
+.failed {
+  color: #f77;
+  white-space: pre-wrap;
+}
+.ok {
+  color: #4f4;
+    white-space: pre-wrap;
+}
+
+meter {
+    box-shadow: inset 0 2px 9px rgba(255, 255, 255, 0.3),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.4);
+}

@@ -11,6 +11,8 @@
 #    6       D17     28
 #    7       D16     27
 #    8       D04     25
+# Relay:      1  2  3  4  5  6  7  8
+pinNumber = (23,22,21,19,18,17,16, 4)
 
 from common import *
 
@@ -23,93 +25,103 @@ except Exception as e:
 
 
 class Relay:
-    def __init__(self, relays):
-        self.relays = relays
+    def __init__(self):
         self.inverse = 1
-        #     Pin, name
-        self.relay = [
-            {'pin': 23, 'name': "Relæ-1", 'function': None},
-            {'pin': 22, 'name': "Relæ-2", 'function': None},
-            {'pin': 21, 'name': "Relæ-3", 'function': None},
-            {'pin': 19, 'name': "Relæ-4", 'function': None},
-            {'pin': 18, 'name': "Relæ-5", 'function': None},
-            {'pin': 17, 'name': "Relæ-6", 'function': None},
-            {'pin': 16, 'name': "Relæ-7", 'function': None},
-            {'pin':  4, 'name': "Relæ-8", 'function': None},
-        ]
+        self.gpioPinControle = {}
+        self.state = {}
 
-        for i in range(0, self.relays):
-            if gpio:
-                self.relay[i]['function'] = Pin(self.relay[i]['pin'], Pin.OUT).value
-                self.set(i, 0)
-            register_interaction('relay', str(i+1), self.handle_cmd)
-            register_interaction('relay', self.relay[i]['name'], self.handle_cmd)
-            debug("Init gpio for {} at pin {}".format(i, self.relay[i]['pin']), DEBUG)
-        register_interaction('relay', 'all', self.handle_cmd)
+        # Initialise GPIO pin
+        assert(config['relay']['relays'])
+        for i in range(1, str2int(config['relay']['relays'].value) + 1):
+            if gpio and f'{i}-pin' in config['relay']:
+                gpioPin = str2int(config['relay'][f'{i}-pin'].value)
+                if gpioPin > 0:
+                    self.gpioPinControle[i] = Pin(gpioPin, Pin.OUT).value
+            self.state[i] = 0
+            self.handleCmd(i, 'off')
 
-    def set(self, relay_no, value):
-        value ^= self.inverse
-        if gpio and self.relay[relay_no]['function']:
-            self.relay[relay_no]['function'](value)
-        debug('Set {}({}) at pin {}: {}'.format(self.relay[relay_no]['name'], relay_no, self.relay[relay_no]['pin'], value) ,INFO)
-        return value ^ self.inverse
-
-    def get(self, relay_no):
-        if gpio:
-            value = self.relay[relay_no]['function']() ^ self.inverse
-        else:
-            value = -1
-        debug('Get {}({}) at pin {}: {}'.format(self.relay[relay_no]['name'], relay_no, self.relay[relay_no]['pin'], value), INFO)
-        return value
-
-    def name(self, relay_no, name=None):
-        if name:
-            self.relay[relay_no]['name'] = name
-        return self.relay[relay_no]['name']
-
-    def handle_cmd(self, interaction, action):
-        if not interaction or interaction == 'all':
-            index = [ i for i in range(len(self.relay)) ]
-        else:
-            try:
-                # by index
-                index = [int(interaction)-1]
-            except:
-                # By name
-                for i in range(len(self.relay)):
-                    if interaction == self.relay[i]['name']:
-                        index = [i]
-                        break
-
+    def handleCmd(self, interaction, action):
+        reply = ''
+        # Action -1=read, 0=off, 1=on, 2=toggle"
         value = -1
-        if action :
+        if len(action):
             if action == 'toggle':
                 value = 2
             else:
-                value = 1 if action.lower() in ('on', 'true', '1') else 0
+                value = 1 if action == 'on' else 0
 
-        reply = ['ok']
-        for i in index:
-            if value < 0:
-                rep = self.get(i)
-            elif value == 2:
-                rep = self.set(i, not self.get(i))
+        # Interaction can be a name, a number or 'all'
+        relayNo = str2int(interaction)
+        debug(f"Relay {interaction} {action}")
+        for i in range(1, str2int(config['relay']['relays'].value) + 1):
+            name = config['relay'][f'{i}-name'].value.lower()
+
+            if interaction != 'all' and interaction != name and relayNo != i: continue
+            if gpio and i in self.gpioPinControle:
+                if value < 0 or value > 1:
+                    # Get value
+                    self.state[i] = self.gpioPinControle[i]() ^ self.inverse
+                if value >= 0:
+                    # Toggle
+                    value = (self.state[i] ^ 1) if value > 1 else value
+                    # Set value
+                    self.state[i] = self.gpioPinControle[i](value ^ self.inverse)
             else:
-                rep = self.set(i, value)
-            reply.append(f"{self.relay[i]['name']} {'on' if rep else 'off'}")
+                if value >= 0:
+                    # Toggle
+                    self.state[i] = (self.state[i] ^ 1) if value > 1 else value
 
-        if len(index) <= 0:
-            reply = ['failed']
+            name = name if len(name) > 0 else str(relayNo)
+            reply += f"\n{name} {'on' if self.state[i] else 'off'} "
 
-        return reply
+        if len(reply):
+            return "ok" + reply
+        else:
+            return f"failed\n '{interaction}' is an unknown interaction"
+        debug(reply, INFO)
 
-app.relay = Relay(8)
+    def handlePresentation(self):
+        presentation = {}
+        for i in range(1, str2int(config['relay']['relays'].value) + 1):
+            name = config['relay'][f'{i}-name'].value
+            if gpio and i in self.gpioPinControle:
+                self.state[i] = self.gpioPinControle[i]() ^ self.inverse
+            debug(f"relay state {i}:{name} {self.state[i]}")
+            presentation[name] = PresentationData(self.state[i], 'slider', f'relay {i} toggle')
+        return presentation
 
+# ------------  Module registration ------------
+# All modules must register itself and attach  to the application
+
+# Register factory cfgurations
+# Usages: cfg.add( group or module name, name, type ('text'), alias, cfguratioon hint, advanced view only)
+# Example cfg.add('relay', '1-name', 'text', 'Relæ-1', 'Name used to reference this interaction', True)
+
+config.add('relay', 'relays', 'text', '8', 'Number of relays supported, starting with the forst one', True)
+
+for i in range(1, str2int(config['relay']['relays'].value) +1):
+    config.add('relay', f"{i}-name", 'text', f"Relæ-{i}", 'Name used to reference this interaction', False)
+    config.add('relay', f"{i}-inverse", ['True','False'], 'True', 'Invers output og GPIO so that low=On Heigh=Off', True)
+    config.add('relay', f"{i}-initial", ['off','on','last'], 0, 'Initial state of relay on startup', True)
+    config.add('relay', f"{i}-pin", 'int', pinNumber[i-1], 'Pin number on GPIO', True)
+
+# Attach to application
+app.relay = Relay()
+
+# Register interactions for this module and corresponding command handler
+
+# Commands has the format: <context> [<interaction> [<action>]]
+#   Context is usually the module name
+#   Interaction is the name of the thing, unique within the context
+#   Action is what to do with it
+
+# The command handler is a function that handles commands sent to this module.
+# If no interactions are needed, you can just register a command handler for this context
+registerContext('relay', app.relay.handleCmd)
+
+# What to show on the dashboard
+app.dashboard['Relay'] = app.relay.handlePresentation
+
+# Run this code, if run alone (for test purposes). Else ignore
 if __name__ == '__main__':
-    import time
-
-    relay = Relay(8)
-    for loop in range(1, 10):
-        for i in range(0, relay.relays):
-            relay.set(i, not relay.get(i))
-            time.sleep(0.3)
+    pass

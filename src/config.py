@@ -1,12 +1,11 @@
 # Common elements to the CP-IOT project
 # By Simon Rigét 2022
 # Released under MIT license
+from common import *
+
 import json
 import os
 from collections import OrderedDict
-
-from common import *
-
 
 class ConfigElement:
     def __init__(self, value=None, type=None, hint=None, advanced=None):
@@ -24,7 +23,7 @@ class ConfigElement:
 # Boolean type: bool
 # Set data types: set, frozenset
 class Constraint:
-    def type_text(element, length=-1):
+    def type_text(self, element, length=-1):
         if isinstance(element, (list, tuple, range, dict)):
             return '0'
         if isinstance(element, str):
@@ -32,7 +31,7 @@ class Constraint:
         else:
             return str(element)[0:length if length >= 0 else len(str(element))]
 
-    def type_int(element, min=None, max=None):
+    def type_int(self, element, min=None, max=None):
         i = int(element)
         if min:
             i = max(i, min)
@@ -40,7 +39,7 @@ class Constraint:
             i = min(i, min)
         return i
 
-    def type_array(element):
+    def type_array(self,element):
         if isinstance(element, (list, tuple, range, dict)):
             return element
         if isinstance(element, (int, float, complex)):
@@ -54,29 +53,32 @@ class Constraint:
 # This class therefore use a variable to store the dict rather than self.
 class Configure():
     class Setting(OrderedDict):
+        # Modules use this to add default (factory) setting to the configuration, on load.
+        # values are only added, if they don't exists in the configuration
         def add(self, group, name, type='text', default='', hint='', advanced=False):
-            debug(f"adding configuration:  {group}, {name}, {type}, {default}, {hint}, DEBUG)")
-            # test constrains
+            # test constrains ?
             if group not in self:
                 self[group] = {}
-            if name in self[group] and self[group][name].value:
-                value = self[group][name].value
-            else:
-                value = Constraint.fit[type](default)
-            self[group][name] = ConfigElement(value, type, hint, advanced)
+            if name not in self[group] or not self[group][name]:
+                self[group][name] = ConfigElement(default, type, hint, advanced)
+                debug(f"adding configuration:  {group}, {name}, {type}, {default}, {hint}", DEBUG)
 
     def __init__(self):
         self.setting = Configure.Setting()
-        self.retrieve()
+        # self.retrieve()
 
     def retrieve(self):
         if 'config.json' in os.listdir():
             with open('config.json', 'r', encoding='utf-8') as f:
                 array = json.loads(f.read())
-                debug(f"Reading configuration: {array}", DEBUG)
                 for group in array:
+                    if not group in self.setting: self.setting[group] = {}
                     for field in array[group]:
-                        self.setting.add(group, field, default=array[group][field])
+                        if field in self.setting[group]:
+                            debug(f"Reading configuration: {group} {field} {array[group][field]}", DEBUG)
+                            self.setting[group][field].value = array[group][field]
+                        else:
+                            self.setting.add(group, field, default=array[group][field])
                 f.close()
 
     def store(self):
@@ -87,22 +89,22 @@ class Configure():
                 for field in self.setting[group]:
                     array[group][field] = self.setting[group][field].value
             debug("Storing configuration: {}".format(array))
-            json.dump(array, f)
+            json.dump(array, f, indent=4, sort_keys=True)
             f.close()
 
     def factory_preset(self):
         debug("Deleting stored configuration")
-        app.__init__()
-        return os.remove('config.json')
+        try:
+            os.remove('config.json')
+        except Exception as e:
+            debug(e)
 
     def handle_cmd(self, interaction, action):
         reply = ['failed']
         if interaction in ['save', 'store']:
             self.store()
             reply = ['ok']
-        elif interaction == 'factory_reset':
-            self.factory_preset()
-            reply = ['ok']
+
         elif interaction == 'all':
             reply = ['ok']
             for group in self.setting:
