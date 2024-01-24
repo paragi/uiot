@@ -295,7 +295,7 @@ async def page_handler(request, writer):
         # Generate dynamic page from template. Default route to first menu element
         sendHTML = SendHTML(writer)
         route = route if route in menu_item else menu_item[0]
-        sendHTML.page_heading(app.cfg['general']['devicename'].value, route,  menu_item)
+        sendHTML.page_heading(config['general']['devicename'].value, route,  menu_item)
         # Populate page content
         if route == 'dash':   await dashboard_page(request, sendHTML)
         if route == 'status': await status_page(request, sendHTML)
@@ -329,39 +329,39 @@ async def dashboard_page(request, sendHTML):
 
 # TODO: restart after facrtory reset
 async def setup_page(request, sendHTML):
-    tabs = [key[:1].upper() + key[1:] for key in app.cfg]
+    tabs = [key[:1].upper() + key[1:] for key in config]
     sendHTML.tab_titles(tabs)
 
-    for group in app.cfg:
+    for group in config:
         tabName = group[:1].upper() + group[1:]
         sendHTML.tab_content_begin(tabName)
 
-        for label in app.cfg[group]:
-            if isinstance(app.cfg[group][label].type,  (list, tuple)):
+        for label in config[group]:
+            if isinstance(config[group][label].type,  (list, tuple)):
                 sendHTML.tab_content_selector(
                     label,
-                    app.cfg[group][label].type,
-                    app.cfg[group][label].value,
+                    config[group][label].type,
+                    config[group][label].value,
                     f"config {group}/{label} ",
-                    app.cfg[group][label].hint,
-                    app.cfg[group][label].advanced
+                    config[group][label].hint,
+                    config[group][label].advanced
                 )
-            elif isinstance(app.cfg[group][label].type,  str):
-                if app.cfg[group][label].type in ('text', 'int', 'password'):
+            elif isinstance(config[group][label].type,  str):
+                if config[group][label].type in ('text', 'int', 'password'):
                     sendHTML.tab_content_input(
                         label,
                         f"cfg {group}/{label}",
-                        app.cfg[group][label].value,
-                        app.cfg[group][label].hint,
-                        app.cfg[group][label].advanced
+                        config[group][label].value,
+                        config[group][label].hint,
+                        config[group][label].advanced
                     )
-                elif app.cfg[group][label].type == 'bool':
+                elif config[group][label].type == 'bool':
                     sendHTML.tab_content_slider(
                         label,
-                        app.cfg[group][label].value,
+                        config[group][label].value,
                         f"cfg {group}/{label}",
-                        app.cfg[group][label].hint,
-                        app.cfg[group][label].advanced
+                        config[group][label].hint,
+                        config[group][label].advanced
                     )
         sendHTML.tab_content_button('Save', 'cfg save', "Save cfguration permanently", False)
         sendHTML.tab_content_button('Resart', 'restart', "Restart device, for new setting to take effect", False)
@@ -391,7 +391,7 @@ def sendContent(sendHTML, title, info):
 
 
 async def status_page(request, sendHTML):
-    tabs = ['Resources','Network']
+    tabs = ['Resources','Network','Time']
     sendHTML.tab_titles(tabs)
     # Resources
     info = {}
@@ -423,10 +423,10 @@ async def status_page(request, sendHTML):
 
     # Network
     info = {}
-    info['AP/Client mode'] = app.cfg['wifi']['mode'].value
+    info['AP/Client mode'] = config['wifi']['mode'].value
     info['As Wifi client'] = 'heading'
-    info['SSID'] = app.cfg['wifi']['ssid'].value
-    info['Key'] = app.cfg['wifi']['key'].value
+    info['SSID'] = config['wifi']['ssid'].value
+    info['Key'] = config['wifi']['key'].value
 
     try:
         if platform == ESP:
@@ -448,16 +448,24 @@ async def status_page(request, sendHTML):
                 info['Host name'] = socket.gethostname()
                 info['IP'] = socket.gethostbyname(info['Host name'])
                 info['Access point'] = 'heading'
-                info['AP SSID'] = app.cfg['access point']['ssid'].value
-                info['AP Key'] = app.cfg['access point']['key'].value
-                info['AP Channel'] = str(app.cfg['access point']['channel'].value)
-                info['AP IP'] = app.cfg['access point']['ip'].value
+                info['AP SSID'] = config['access point']['ssid'].value
+                info['AP Key'] = config['access point']['key'].value
+                info['AP Channel'] = str(config['access point']['channel'].value)
+                info['AP IP'] = config['access point']['ip'].value
             except Exception as e:
                 info['IP'] = ''
     except Exception as e:
         debug(e)
     sendContent(sendHTML, tabs[1], info)
 
+    # Time
+    info = {}
+    import datetime
+    now = datetime.datetime.now()
+    print(now.year, now.month, now.day, now.hour, now.minute, now.second)
+    info['Time'] = f"{now.hour}:{now.minute}"
+    info['Date'] = f"{now.year}-{now.month}-{now.day}"
+    sendContent(sendHTML, tabs[2], info)
 
 async def tool_page(request, sendHTML):
     tabs = ['Miscellaneous','Terminal']
@@ -486,14 +494,14 @@ async def start():
 
             webserver = uwebserver.Webserver(
                 host=app.wifi.ip['access_point'],
-                port=app.cfg['webserver']['access point port'].value,
+                port=config['webserver']['access point port'].value,
                 dyn_handler=page_handler,
-                docroot=app.cfg['webserver']['document root'].value
+                docroot=config['webserver']['document root'].value
             )
             app.task['webserver access point'] = asyncio.create_task(webserver.start())
             print("--------------------------------------------------")
             print(
-                f" Web server started for access point at http://{app.wifi.ip['access_point']}:{app.cfg['webserver']['access point port'].value}")
+                f" Web server started for access point at http://{app.wifi.ip['access_point']}:{config['webserver']['access point port'].value}")
             print("--------------------------------------------------")
 
         if app.wifi.mode != app.wifi.MODE_AP:
@@ -501,8 +509,8 @@ async def start():
             while not app.wifi.ip['client']:
                 await asyncio.sleep(0.3)
 
-            port = app.cfg['webserver']['client port'].value
-            docroot = app.cfg['webserver']['document root'].value
+            port = config['webserver']['client port'].value
+            docroot = config['webserver']['document root'].value
 
             if platform == PC and port < 1024:
                 port = 8080
@@ -522,12 +530,12 @@ async def start():
             print("-------------------------------------------------------------")
     except Exception as e:
         debug(e)
-    gc.collect()
+    # gc.collect()
 
 
-app.cfg.add('webserver', 'client port', 'int', 80, 'Webserver port (Default 80 on ESP, 8080 on PC)', True)
-app.cfg.add('webserver', 'document root', 'text', '/www', 'Webservers document root (Default to current directory)', True)
-app.cfg.add('webserver', 'access point port', 'int', 80, 'Webserver port for access point (Default 80 on ESP, 8080 on PC)', True)
+config.add('webserver', 'client port', 'int', 80, 'Webserver port (Default 80 on ESP, 8080 on PC)', True)
+config.add('webserver', 'document root', 'text', '/www', 'Webservers document root (Default to current directory)', True)
+config.add('webserver', 'access point port', 'int', 80, 'Webserver port for access point (Default 80 on ESP, 8080 on PC)', True)
 
 startJob('webserver', start)
 

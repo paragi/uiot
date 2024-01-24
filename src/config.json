@@ -13,17 +13,15 @@
         "devicename": "ENP-1 unit"
     },
     "module": {
-        "01-wifi": "on",
-        "config": "on",
-        "flash": "off",
-        "relay": "on",
-        "test": "off",
-        "web": "on"
+        "010-wifi": "on",
+        "020-web": "on",
+        "090-flash": "on",
+        "090-relay": "on"
     },
     "relay": {
         "1-initial": "",
         "1-inverse": "True",
-        "1-name": "lys",
+        "1-name": "Rel\u00e6-1",
         "1-pin": 23,
         "2-initial": "",
         "2-inverse": "True",
@@ -64,8 +62,8 @@
         "connect_timeout_s": 5,
         "dns": "",
         "gateway": "",
-        "ip": "",
-        "key": "",
+        "ip": "10.0.0.14",
+        "key": "goddagmandfugles4ngtalsmukt",
         "link_up_ip": "",
         "link_up_port": "",
         "mode": "client",

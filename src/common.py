@@ -29,8 +29,12 @@ def debug( msg=None, msg_level=None):
     if not msg_level or not isinstance(msg_level, int):
         msg_level = INFO
     if isinstance(msg, Exception) and app.debugLevel > SILENT:
-        file = __file__.rsplit("/", 1)[1]
-        print(f"Error: {type(msg).__name__} at line {msg.__traceback__.tb_lineno} of {file}: {msg}")
+        try:
+            file = __file__.rsplit("/", 1)[-1]
+            print(f"Error: {type(msg).__name__} at line {msg.__traceback__.tb_lineno} of {file}: {msg}")
+        except Exception as e:
+            print(f"Error: {type(msg).__name__}: {msg}")
+
     elif msg and msg_level <= app.debugLevel and app.debugLevel > SILENT:
         print(app.debugLevelStr[msg_level] + ':', msg)
 
@@ -57,7 +61,7 @@ class PresentationData:
 
 class App(dict):
     def __init__(self):
-        dict.__init__(self)
+        # dict.__init__(self)
 
         self.debugLevelStr = ('Silent', 'Error', 'Warning', 'Info', 'Debug')
         self.task = {}
@@ -81,7 +85,8 @@ class App(dict):
             if ProcessName in app.task:
                 debug(f"Canẗ start job. Process already started: {ProcessName}", ERROR)
                 return
-        if callable(asyncFunction) and asyncio.iscoroutinefunction(asyncFunction):
+        # if callable(asyncFunction) and asyncio.iscoroutinefunction(asyncFunction):
+        if callable(asyncFunction):
             app.task[ProcessName] = asyncio.create_task(asyncFunction())
         else:
             debug(f"Canẗ start job. Call is not an asynchronous function: {ProcessName}", ERROR)

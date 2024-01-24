@@ -1,4 +1,5 @@
 # Flash LED
+# By Simon Rigét 2022
 # An LED is usually attach to GPIO pin 2 on a developer board.
 # This module starts a job, that flashed this LED
 # This will only work on an ESP32 developer board, but must not trigger exception when run on other platforms.

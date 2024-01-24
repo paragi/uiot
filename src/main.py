@@ -7,7 +7,6 @@ print('|                  Edge Node Platform 1                     |')
 print('+-----------------------------------------------------------+')
 
 import gc
-import glob
 
 # import core modules
 print('Initializing core modules...')
@@ -15,6 +14,8 @@ from common import *
 
 # importing libraries
 import os
+
+'''
 import psutil
 
 
@@ -39,7 +40,7 @@ def profile(func):
 
     return wrapper
 
-
+'''
 
 async def cmd_start():
   try:
@@ -60,20 +61,17 @@ async def cmd_start():
 # ------------------------------------ Main ------------------------------------
 async def start_services():
   print('Loading and initializing modules...')
-  global app, cfg, dashboard, task
 
-  coreModules = ('main','common','cfg','command')
-  if 'module' not in app.cfg:
-    app.cfg['module'] = {}
+  if 'module' not in config:
+    config['module'] = {}
 
-  modules = sorted(glob.glob('*.py'))
+  modules = sorted([i for i in os.listdir() if i.startswith('0')])
   for fileName in modules:
     name = fileName.split('.',2)[0]
-    if name in coreModules: continue
-    if name not in app.cfg['module']:
-      app.cfg.add('module', name, ('on','off'), 'on')
+    if name not in config['module']:
+      config.add('module', name, ('on', 'off'), 'on')
 
-    if app.cfg['module'][name].value == 'on':
+    if config['module'][name].value == 'on':
       print('Loading module', name)
       __import__(name)
       gc.collect()
@@ -92,7 +90,8 @@ async def start_services():
 app.debugLevel = DEBUG
 # app.debugLevel = WARNING
 
-
+# Add default device name
+config.add('general','devicename', 'text','ENP-1 unit')
 
 # Config can't register interactions because of circular initialiazion
 # So it has to be done here instead of in cfg.py
@@ -100,11 +99,8 @@ registerContext('cfg', app.configure.handle_cmd, ['save','store'])
 registerContext('config', app.configure.handle_cmd, ['save','store'])
 registerContext('configuration', app.configure.handle_cmd, ['save','store'])
 
-# Add default device name
-app.cfg.add('general','devicename', 'text','ENP-1 unit')
-
 # Start all services as background jobs
-profile(asyncio.run(start_services()))
+asyncio.run(start_services())
 
 # take input from usb interface
 def not_avtive():

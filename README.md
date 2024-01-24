@@ -1,21 +1,29 @@
-# Coding Pirate Elpris projekt
+# Edge Node Platform - one
 
-Udestående problemer:
-* moderne browsere accepterer ikke at vise sider fra ESP i access point mode. (Der er masser af trafik, men siden vises ikke)
-* Optimer caching
-* Optimer memory forbrug
+ENP-1 is a platform for solutions based on ESP32 (a cheep and versetile microcontroler devices) 
+It provides basic functionality and easy adaption of modules intendet for specific hardware
+Modules are writen in python, using micropython firmware.
 
+ENP-1 is mainly intented for smarthome devices. 
+
+Main features:
+    * WiFi client og access point mode
+    * Webserver with dashboard, configuration at tools.
+    * MQTT
+    * Command interface
+    * Timer
+    * Relay control module
+    * support for some one-wire and i2c peripherals
+
+ENP-1 was originally made as a teaching tool for kids, to play with microcontrolers.
+
+Current state: Alpha
 
 
 ## Installation
-TODO: find bedre metode 
+TODO:  
 
 ### GitHub
-I terminalen:
-
-    git config --global user.email "you@example.com"
-    git config --global user.name "Your Name"
-    (... opret token via PyCharm)
 
 ### flash ESP32 med micropython
 
@@ -39,15 +47,5 @@ flash alle filer under "src" til ESP-32 i roden.
 
 
 ### connect to WiFi
-In REPL and type:
-
-    import network
-    station = network.WLAN(network.STA_IF)
-    station.active(True)
-    station.connect('<ssid>', '<password>')
- 
-test:
-
-    print(station.ifconfig())
-
+TODO
 

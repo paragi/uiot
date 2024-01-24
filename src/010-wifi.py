@@ -57,11 +57,11 @@ class Wifi:
     config.add('wifi', 'retry_connect_every_s', 'int', 30, 'Time between retry connecting to wifi', True)
     config.add('wifi', 'connect_timeout_s', 'int', 5, 'Timeout for connecting to wifi', True)
     config.add('wifi', 'read_timeout_s', 'int', 1, 'Timeout for socket reading (from clinet) in milli seconds', True)
-    config.add('access point', 'ssid', 'text', 'CP_IOT', 'Network name for this device in access point modeo', False)
-    config.add('access point', 'key', 'password', 'piratekey', 'Passphrase to connect to device ', False)
+    config.add('access_point', 'ssid', 'text', 'CP_IOT', 'Network name for this device in access point modeo', False)
+    config.add('access_point', 'key', 'password', 'piratekey', 'Passphrase to connect to device ', False)
     selection = ['auto'] + [i for i in range(1,15)]
-    config.add('access point', 'channel',  selection, 6, 'Wifi channel (Default auto select)', True)
-    config.add('access point', 'ip', 'text', '', 'IP address', True)
+    config.add('access_point', 'channel',  selection, 6, 'Wifi channel (Default auto select)', True)
+    config.add('access_point', 'ip', 'text', '', 'IP address', True)
     if platform != PC:
       self.nic = network.WLAN(network.STA_IF)
       self.niap = network.WLAN(network.AP_IF)
@@ -81,15 +81,15 @@ class Wifi:
       return True
 
     if len(link_up_ip) < 7 or link_up_ip == '0.0.0.0':
-      link_up_ip = self.nic.ifcfg()[2] # Use gateway
+      link_up_ip = self.nic.ifconfig()[2] # Use gateway
     try:
       link_up_port = int(link_up_port)
     except:
       link_up_port = 80
 
-    debug(f"Checking Wifi link at {self.nic.ifcfg()[2]}:{link_up_port}")
+    debug(f"Checking Wifi link at {self.nic.ifconfig()[2]}:{link_up_port}")
     try:
-      reader, writer = await asyncio.open_connection(self.nic.ifcfg()[2], link_up_port)
+      reader, writer = await asyncio.open_connection(self.nic.ifconfig()[2], link_up_port)
       writer.write(b'GET / HTTP/1.0\r\n\r\n')
       await writer.drain()
       debug(await reader.readline(), DEBUG)
@@ -189,11 +189,11 @@ class Wifi:
         # self.ap_if.cfg(essid=self.ap_ssid, password=self.ap_key, authmode=network.AUTH_WPA_WPA2_PSK)
         # self.ap_if.cfg(essid=ssid, password=key, channel=channel, authmode=network.AUTH_WPA_WPA2_PSK)
         # self.ap_if.cfg(reconnects=5)
-        self.niap.cfg(essid=config['access_point']['ssid'].value, password=config['access_point']['key'].value)
+        self.niap.config(essid=config['access_point']['ssid'].value, password=config['access_point']['key'].value)
         self.ap_down = False
         # except:
         #  pass
-        self.ip['access_point'] = self.niap.ifcfg()[0]
+        self.ip['access_point'] = self.niap.ifconfig()[0]
         debug("-----------------------------------------------------------")
         debug(f"  Accesspoint at  '{config['access_point']['ssid'].value}' password: '{config['access_point']['key'].value}'")
         # debug(f"    Channel: {channel}")
@@ -216,7 +216,7 @@ class Wifi:
           if self.mode == self.MODE_FALLBACK_TO_AP:
             debug("Deactivating Access point")
             self.niap.active(False)
-          ip = self.nic.ifcfg()
+          ip = self.nic.ifconfig()
           debug("-----------------------------------------------------------")
           debug(f"  WiFi Connected to '{cfg['wifi']['ssid'].value}'")
           debug(f"    Client IP:    {ip[0]}")
@@ -238,7 +238,7 @@ class Wifi:
 
       if self.mode != self.MODE_AP and self.link_up:
         self.link_up = await self.is_link_up()
-        gc.collect()
+        # gc.collect()
 
 
 if 'wifi' not in app:
